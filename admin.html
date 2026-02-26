@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>VT Shared Governance Tracker - Admin</title>
-  <link rel="stylesheet" href="css/styles.css">
+  <link rel="stylesheet" href="css/styles.css?v=3">
 </head>
 <body>
   <div class="app-container">
@@ -33,6 +33,7 @@
             Import
             <input type="file" id="importFile" accept=".json" style="display: none;">
           </label>
+          <button type="button" class="btn btn-danger btn-sm" id="resetDataBtn" title="Clear locally cached data and reload from files">Reset Cached Data</button>
         </div>
       </div>
 
@@ -68,9 +69,9 @@
     </main>
   </div>
 
-  <script src="js/utils.js"></script>
-  <script src="js/auth.js"></script>
-  <script src="js/admin.js"></script>
+  <script src="js/utils.js?v=3"></script>
+  <script src="js/auth.js?v=3"></script>
+  <script src="js/admin.js?v=3"></script>
   <script>
     (function() {
       // Always attach UI handlers first so logout always works
@@ -98,6 +99,13 @@
         }
       });
 
+      // Reset cached data button
+      document.getElementById('resetDataBtn').addEventListener('click', function() {
+        localStorage.removeItem(GOV_STORAGE_KEYS.MEETINGS_OVERRIDE);
+        localStorage.removeItem(GOV_STORAGE_KEYS.ASSIGNMENTS_OVERRIDE);
+        window.location.reload();
+      });
+
       // Session check - redirect to login if not authenticated
       var session = requireAuth('admin');
       if (!session) return;
@@ -118,12 +126,14 @@
         try {
           renderAssignmentsSection(assignments, meetings, allowedCommittees);
         } catch (e) {
-          document.getElementById('assignmentsSection').innerHTML = '<div class="alert alert-info">Error loading assignments: ' + e.message + '</div>';
+          console.error('Assignments render error:', e);
+          document.getElementById('assignmentsSection').innerHTML = '<div class="alert alert-info">Error: ' + e.message + '</div>';
         }
         try {
           renderMeetingsSection(meetings, allowedCommittees);
         } catch (e) {
-          document.getElementById('meetingsSection').innerHTML = '<div class="alert alert-info">Error loading meetings: ' + e.message + '</div>';
+          console.error('Meetings render error:', e);
+          document.getElementById('meetingsSection').innerHTML = '<div class="alert alert-info">Error: ' + e.message + '</div>';
         }
       }).catch(function(e) {
         document.getElementById('assignmentsSection').innerHTML = '<div class="alert alert-info">Unable to load data. Refresh to retry.</div>';
