@@ -143,9 +143,10 @@ function renderMeetingsCalendar(containerId, meetings, options = {}) {
   });
 
   const committeeColorMap = buildCommitteeColorMap(datedMeetings);
-  const firstMeetingDate = parseCalendarDate(datedMeetings[0].date);
-  const firstMeetingMonth = firstMeetingDate
-    ? new Date(firstMeetingDate.getFullYear(), firstMeetingDate.getMonth(), 1)
+  const nextMeeting = datedMeetings.find(meeting => String(meeting.date) >= todayKey) || datedMeetings[0];
+  const nextMeetingDate = parseCalendarDate(nextMeeting && nextMeeting.date);
+  const nextMeetingMonth = nextMeetingDate
+    ? new Date(nextMeetingDate.getFullYear(), nextMeetingDate.getMonth(), 1)
     : null;
 
   function renderMonth() {
@@ -227,8 +228,8 @@ function renderMeetingsCalendar(containerId, meetings, options = {}) {
     container.querySelectorAll('[data-cal-nav]').forEach(btn => {
       btn.addEventListener('click', function() {
         const nav = this.getAttribute('data-cal-nav');
-        if (nav === 'jump-first' && firstMeetingMonth) {
-          state.viewMonth = new Date(firstMeetingMonth.getFullYear(), firstMeetingMonth.getMonth(), 1);
+        if (nav === 'jump-first' && nextMeetingMonth) {
+          state.viewMonth = new Date(nextMeetingMonth.getFullYear(), nextMeetingMonth.getMonth(), 1);
         } else {
           const delta = nav === 'prev' ? -1 : 1;
           state.viewMonth = new Date(state.viewMonth.getFullYear(), state.viewMonth.getMonth() + delta, 1);
