@@ -58,6 +58,16 @@
       </div>
 
       <div class="card">
+        <h2 class="card-title">Meeting Calendar</h2>
+        <p style="margin: 0 0 1rem 0; color: var(--color-text-muted); font-size: 0.9rem;">
+          Cabinet view of all scheduled meetings. Colors indicate committee.
+        </p>
+        <div id="adminCalendarSection">
+          <p class="empty-state">Loading...</p>
+        </div>
+      </div>
+
+      <div class="card">
         <h2 class="card-title">Meetings</h2>
         <p style="margin: 0 0 1rem 0; color: var(--color-text-muted); font-size: 0.9rem;">
           Edit meeting details, add new meetings, or remove outdated ones.
@@ -126,13 +136,22 @@
           document.getElementById('assignmentsSection').innerHTML = '<div class="alert alert-info">Error: ' + e.message + '</div>';
         }
         try {
-          renderMeetingsSection(meetings, allowedCommittees);
+          renderMeetingsCalendar('adminCalendarSection', meetings, {
+            emptyMessage: 'No meetings scheduled.'
+          });
+          renderMeetingsSection(meetings, allowedCommittees, function(updatedMeetings) {
+            renderMeetingsCalendar('adminCalendarSection', updatedMeetings, {
+              emptyMessage: 'No meetings scheduled.'
+            });
+          });
         } catch (e) {
           console.error('Meetings render error:', e);
+          document.getElementById('adminCalendarSection').innerHTML = '<div class="alert alert-info">Error: ' + e.message + '</div>';
           document.getElementById('meetingsSection').innerHTML = '<div class="alert alert-info">Error: ' + e.message + '</div>';
         }
       }).catch(function(e) {
         document.getElementById('assignmentsSection').innerHTML = '<div class="alert alert-info">Unable to load data. Refresh to retry.</div>';
+        document.getElementById('adminCalendarSection').innerHTML = '<div class="alert alert-info">Unable to load data. Refresh to retry.</div>';
         document.getElementById('meetingsSection').innerHTML = '<div class="alert alert-info">Unable to load data. Refresh to retry.</div>';
       });
     })();

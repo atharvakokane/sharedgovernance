@@ -23,6 +23,16 @@
 
     <main class="main-content">
       <div class="card">
+        <h2 class="card-title">My Meeting Calendar</h2>
+        <p style="margin: 0 0 1rem 0; color: var(--color-text-muted);">
+          Calendar view of meetings assigned to your committees.
+        </p>
+        <div id="myCalendarSection">
+          <p class="empty-state">Loading...</p>
+        </div>
+      </div>
+
+      <div class="card">
         <h2 class="card-title">My Committees & Meetings</h2>
         <p id="welcomeMessage" style="margin: 0 0 1rem 0; color: var(--color-text-muted);">
           View your assigned committees and submit attendance and notes for each meeting.
@@ -67,8 +77,13 @@
             ? 'You are assigned to: ' + committees.join(', ') + '. Submit attendance and notes below.'
             : 'You are not currently assigned to any committees.';
 
+        renderMeetingsCalendar('myCalendarSection', myMeetings, {
+          emptyMessage: 'No meetings scheduled for your committees at this time.'
+        });
         renderDashboard(session, myMeetings);
       }).catch(function() {
+        document.getElementById('myCalendarSection').innerHTML =
+          '<div class="alert alert-info">Unable to load meetings. Please try again later.</div>';
         document.getElementById('meetingsContainer').innerHTML =
           '<div class="alert alert-info">Unable to load meetings. Please try again later.</div>';
       });

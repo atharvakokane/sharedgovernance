@@ -106,3 +106,149 @@ function generateMeetingId(meetings) {
   const max = ids.length ? Math.max(...ids) : 0;
   return `m${max + 1}`;
 }
+
+/**
+ * Renders a month-view calendar with meetings grouped by day.
+ * Meetings are color-coded by committee.
+ * @param {string} containerId - Target container element id
+ * @param {Array} meetings - Meetings to render
+ * @param {Object} options - Optional display options
+ */
+function renderMeetingsCalendar(containerId, meetings, options = {}) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+
+  const safeMeetings = Array.isArray(meetings) ? meetings.slice() : [];
+  const datedMeetings = safeMeetings
+    .filter(m => m && m.date)
+    .sort((a, b) => String(a.date).localeCompare(String(b.date)));
+
+  if (datedMeetings.length === 0) {
+    container.innerHTML = `<div class="empty-state">${calendarEscapeHtml(options.emptyMessage || 'No meetings scheduled.')}</div>`;
+    return;
+  }
+
+  const firstMonthDate = parseCalendarDate(datedMeetings[0].date);
+  const initialMonth = firstMonthDate ? new Date(firstMonthDate.getFullYear(), firstMonthDate.getMonth(), 1) : getCurrentCalendarMonth();
+
+  const state = {
+    viewMonth: initialMonth
+  };
+
+  const meetingsByDay = {};
+  datedMeetings.forEach(meeting => {
+    const dayKey = meeting.date;
+    if (!meetingsByDay[dayKey]) meetingsByDay[dayKey] = [];
+    meetingsByDay[dayKey].push(meeting);
+  });
+
+  const committeeColorMap = buildCommitteeColorMap(datedMeetings);
+
+  function renderMonth() {
+    const monthLabel = state.viewMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+    const monthStart = new Date(state.viewMonth.getFullYear(), state.viewMonth.getMonth(), 1);
+    const monthEnd = new Date(state.viewMonth.getFullYear(), state.viewMonth.getMonth() + 1, 0);
+    const firstWeekday = monthStart.getDay(); // 0 = Sunday
+    const totalDays = monthEnd.getDate();
+
+    const cells = [];
+    for (let i = 0; i < firstWeekday; i += 1) {
+      cells.push('<div class="calendar-day calendar-day-empty" aria-hidden="true"></div>');
+    }
+
+    for (let day = 1; day <= totalDays; day += 1) {
+      const dayDate = new Date(state.viewMonth.getFullYear(), state.viewMonth.getMonth(), day);
+      const dayKey = toCalendarKey(dayDate);
+      const dayMeetings = meetingsByDay[dayKey] || [];
+      const meetingChips = dayMeetings.map(meeting => {
+        const color = committeeColorMap[meeting.committee] || '#6c757d';
+        return `
+          <div class="calendar-event" style="border-left-color: ${color};">
+            <span class="calendar-event-name">${calendarEscapeHtml(meeting.name || 'Meeting')}</span>
+            <span class="calendar-event-time">${calendarEscapeHtml(meeting.time || '')}</span>
+          </div>
+        `;
+      }).join('');
+
+      cells.push(`
+        <div class="calendar-day ${dayMeetings.length ? 'calendar-day-has-events' : ''}">
+          <div class="calendar-day-number">${day}</div>
+          <div class="calendar-events">${meetingChips}</div>
+        </div>
+      `);
+    }
+
+    const legendItems = Object.keys(committeeColorMap).sort().map(committee => `
+      <div class="calendar-legend-item">
+        <span class="calendar-legend-swatch" style="background: ${committeeColorMap[committee]};"></span>
+        <span>${calendarEscapeHtml(committee)}</span>
+      </div>
+    `).join('');
+
+    container.innerHTML = `
+      <div class="calendar-wrap">
+        <div class="calendar-toolbar">
+          <button type="button" class="btn btn-secondary btn-sm" data-cal-nav="prev" aria-label="Previous month">Previous</button>
+          <h3 class="calendar-month-label">${calendarEscapeHtml(monthLabel)}</h3>
+          <button type="button" class="btn btn-secondary btn-sm" data-cal-nav="next" aria-label="Next month">Next</button>
+        </div>
+        <div class="calendar-legend">${legendItems}</div>
+        <div class="calendar-grid-header">
+          <div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div>
+        </div>
+        <div class="calendar-grid">${cells.join('')}</div>
+      </div>
+    `;
+
+    container.querySelectorAll('[data-cal-nav]').forEach(btn => {
+      btn.addEventListener('click', function() {
+        const delta = this.getAttribute('data-cal-nav') === 'prev' ? -1 : 1;
+        state.viewMonth = new Date(state.viewMonth.getFullYear(), state.viewMonth.getMonth() + delta, 1);
+        renderMonth();
+      });
+    });
+  }
+
+  renderMonth();
+}
+
+function buildCommitteeColorMap(meetings) {
+  const palette = [
+    '#861f41', '#e87722', '#2a9d8f', '#457b9d', '#7b2cbf', '#ef476f',
+    '#118ab2', '#6a994e', '#bc6c25', '#3a86ff', '#ff6b6b', '#2b9348'
+  ];
+  const committees = [...new Set(meetings.map(m => m.committee).filter(Boolean))].sort();
+  const colorMap = {};
+  committees.forEach((committee, i) => {
+    colorMap[committee] = palette[i % palette.length];
+  });
+  return colorMap;
+}
+
+function parseCalendarDate(dateStr) {
+  if (!dateStr) return null;
+  const parts = String(dateStr).split('-').map(Number);
+  if (parts.length !== 3 || parts.some(Number.isNaN)) return null;
+  return new Date(parts[0], parts[1] - 1, parts[2]);
+}
+
+function toCalendarKey(dateObj) {
+  const y = dateObj.getFullYear();
+  const m = String(dateObj.getMonth() + 1).padStart(2, '0');
+  const d = String(dateObj.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
+
+function getCurrentCalendarMonth() {
+  const now = new Date();
+  return new Date(now.getFullYear(), now.getMonth(), 1);
+}
+
+function calendarEscapeHtml(text) {
+  if (!text) return '';
+  return String(text)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}

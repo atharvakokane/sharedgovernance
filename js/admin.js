@@ -182,8 +182,9 @@ function renderAssignmentsSection(assignments, meetings, allowedCommittees = [])
  * Renders the meetings management section.
  * @param {Array} meetings - Meetings data
  * @param {Array} allowedCommittees - Allowed committees from committees.json
+ * @param {Function} onMeetingsChange - Callback fired after meetings are changed
  */
-function renderMeetingsSection(meetings, allowedCommittees) {
+function renderMeetingsSection(meetings, allowedCommittees, onMeetingsChange) {
   allowedCommittees = allowedCommittees || [];
   const container = document.getElementById('meetingsSection');
   if (!container) return;
@@ -233,6 +234,7 @@ function renderMeetingsSection(meetings, allowedCommittees) {
       if (meeting) {
         meeting[this.dataset.field] = this.value;
         saveMeetingsOverride(meetings);
+        if (typeof onMeetingsChange === 'function') onMeetingsChange(meetings);
       }
     });
   });
@@ -243,7 +245,8 @@ function renderMeetingsSection(meetings, allowedCommittees) {
       const id = row.dataset.meetingId;
       const newMeetings = meetings.filter(m => m.id !== id);
       saveMeetingsOverride(newMeetings);
-      renderMeetingsSection(newMeetings, allowedCommittees);
+      if (typeof onMeetingsChange === 'function') onMeetingsChange(newMeetings);
+      renderMeetingsSection(newMeetings, allowedCommittees, onMeetingsChange);
     });
   });
 
@@ -262,7 +265,8 @@ function renderMeetingsSection(meetings, allowedCommittees) {
       location: ''
     });
     saveMeetingsOverride(meetings);
-    renderMeetingsSection(meetings, allowedCommittees);
+    if (typeof onMeetingsChange === 'function') onMeetingsChange(meetings);
+    renderMeetingsSection(meetings, allowedCommittees, onMeetingsChange);
   });
 }
 
