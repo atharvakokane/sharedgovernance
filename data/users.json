@@ -1,0 +1,17 @@
+[
+  {
+    "pid": "admin001",
+    "password": "admin123",
+    "role": "admin"
+  },
+  {
+    "pid": "12345678",
+    "password": "senator1",
+    "role": "senator"
+  },
+  {
+    "pid": "87654321",
+    "password": "senator2",
+    "role": "senator"
+  }
+]

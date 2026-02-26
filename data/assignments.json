@@ -1,0 +1,10 @@
+[
+  {
+    "pid": "12345678",
+    "committees": ["Academic Affairs Committee", "Student Life Committee"]
+  },
+  {
+    "pid": "87654321",
+    "committees": ["Finance Committee", "Academic Affairs Committee"]
+  }
+]

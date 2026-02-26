@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VT Shared Governance Tracker - Admin</title>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <div class="app-container">
+    <header class="app-header">
+      <h1>VT Shared Governance Tracker</h1>
+      <div class="header-actions">
+        <button class="menu-toggle" id="menuToggle" aria-label="Toggle menu">☰</button>
+        <nav class="nav-main" id="navMain">
+          <span style="color: rgba(255,255,255,0.9); padding: 0.5rem 0.75rem; font-size: 0.9rem;">Admin</span>
+          <button type="button" class="btn btn-logout" id="logoutBtn">Logout</button>
+        </nav>
+      </div>
+    </header>
+
+    <main class="main-content">
+      <div class="card">
+        <h2 class="card-title">Cabinet Control Center</h2>
+        <p style="margin: 0 0 1rem 0; color: var(--color-text-muted);">
+          View submissions, manage committee assignments, and edit meetings.
+        </p>
+        <div style="display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center;">
+          <button type="button" class="btn btn-primary" id="exportBtn">Export Submissions (JSON)</button>
+          <label class="btn btn-secondary" style="margin: 0; cursor: pointer;">
+            Import Submissions
+            <input type="file" id="importFile" accept=".json" style="display: none;">
+          </label>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2 class="card-title">Submissions</h2>
+        <p style="margin: 0 0 1rem 0; color: var(--color-text-muted); font-size: 0.9rem;">
+          All meeting notes and attendance confirmations from senators.
+        </p>
+        <div id="submissionsSection">
+          <p class="empty-state">Loading...</p>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2 class="card-title">Committee Assignments</h2>
+        <p style="margin: 0 0 1rem 0; color: var(--color-text-muted); font-size: 0.9rem;">
+          Reassign senators to committees. Select a senator and committee, then Add or Remove.
+        </p>
+        <div id="assignmentsSection">
+          <p class="empty-state">Loading...</p>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2 class="card-title">Meetings</h2>
+        <p style="margin: 0 0 1rem 0; color: var(--color-text-muted); font-size: 0.9rem;">
+          Edit meeting details, add new meetings, or remove outdated ones.
+        </p>
+        <div id="meetingsSection">
+          <p class="empty-state">Loading...</p>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="js/utils.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/admin.js"></script>
+  <script>
+    // Session check - admins only
+    const session = requireAuth('admin');
+    if (!session) return;
+
+    // Mobile menu toggle
+    document.getElementById('menuToggle').addEventListener('click', function() {
+      document.getElementById('navMain').classList.toggle('open');
+    });
+
+    // Logout
+    document.getElementById('logoutBtn').addEventListener('click', function() {
+      clearSession();
+      redirectToLogin();
+    });
+
+    // Export button
+    document.getElementById('exportBtn').addEventListener('click', exportSubmissions);
+
+    // Import button
+    document.getElementById('importFile').addEventListener('change', function(e) {
+      const file = e.target.files?.[0];
+      if (file) {
+        importSubmissions(file, () => renderSubmissionsTable(getSubmissions()));
+        e.target.value = '';
+      }
+    });
+
+    // Load admin data
+    (async function init() {
+      try {
+        const [meetingsFromFile, assignmentsFromFile] = await Promise.all([
+          fetchData('meetings.json'),
+          fetchData('assignments.json')
+        ]);
+
+        const meetings = getMeetingsWithOverride(meetingsFromFile);
+        const assignments = getAssignmentsWithOverride(assignmentsFromFile);
+
+        renderSubmissionsTable(getSubmissions());
+        renderAssignmentsSection(assignments, meetings);
+        renderMeetingsSection(meetings);
+      } catch (err) {
+        document.getElementById('submissionsSection').innerHTML = 
+          '<div class="alert alert-info">Unable to load data. Please try again later.</div>';
+      }
+    })();
+  </script>
+</body>
+</html>

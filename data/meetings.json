@@ -1,0 +1,34 @@
+[
+  {
+    "id": "m1",
+    "committee": "Academic Affairs Committee",
+    "name": "Curriculum Review Meeting",
+    "date": "2025-03-01",
+    "time": "2:00 PM",
+    "location": "Squires 340"
+  },
+  {
+    "id": "m2",
+    "committee": "Academic Affairs Committee",
+    "name": "Policy Discussion",
+    "date": "2025-03-15",
+    "time": "3:30 PM",
+    "location": "Newman Library 207"
+  },
+  {
+    "id": "m3",
+    "committee": "Student Life Committee",
+    "name": "Campus Events Planning",
+    "date": "2025-03-05",
+    "time": "1:00 PM",
+    "location": "Squires 245"
+  },
+  {
+    "id": "m4",
+    "committee": "Finance Committee",
+    "name": "Budget Allocation Review",
+    "date": "2025-03-10",
+    "time": "4:00 PM",
+    "location": "Burruss Hall 324"
+  }
+]

@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VT Shared Governance Tracker - Dashboard</title>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <div class="app-container">
+    <header class="app-header">
+      <h1>VT Shared Governance Tracker</h1>
+      <div class="header-actions">
+        <button class="menu-toggle" id="menuToggle" aria-label="Toggle menu">☰</button>
+        <nav class="nav-main" id="navMain">
+          <span style="color: rgba(255,255,255,0.9); padding: 0.5rem 0.75rem; font-size: 0.9rem;">Dashboard</span>
+          <button type="button" class="btn btn-logout" id="logoutBtn">Logout</button>
+        </nav>
+      </div>
+    </header>
+
+    <main class="main-content">
+      <div class="card">
+        <h2 class="card-title">My Committees & Meetings</h2>
+        <p id="welcomeMessage" style="margin: 0 0 1rem 0; color: var(--color-text-muted);">
+          View your assigned committees and submit attendance and notes for each meeting.
+        </p>
+        <div id="meetingsContainer">
+          <p class="empty-state">Loading...</p>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="js/utils.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/dashboard.js"></script>
+  <script>
+    // Session check - redirect to login if not authenticated
+    const session = requireAuth('senator');
+    if (!session) return;
+
+    // Mobile menu toggle
+    document.getElementById('menuToggle').addEventListener('click', function() {
+      document.getElementById('navMain').classList.toggle('open');
+    });
+
+    // Logout
+    document.getElementById('logoutBtn').addEventListener('click', function() {
+      clearSession();
+      redirectToLogin();
+    });
+
+    // Load and render dashboard
+    (async function init() {
+      try {
+        const [meetingsFromFile, assignmentsFromFile] = await Promise.all([
+          fetchData('meetings.json'),
+          fetchData('assignments.json')
+        ]);
+
+        const assignments = getAssignmentsWithOverride(assignmentsFromFile);
+        const meetings = getMeetingsWithOverride(meetingsFromFile);
+        const committees = getAssignedCommittees(session.pid, assignments);
+        const myMeetings = filterMeetingsByCommittees(meetings, committees);
+
+        document.getElementById('welcomeMessage').textContent = 
+          committees.length > 0 
+            ? `You are assigned to: ${committees.join(', ')}. Submit attendance and notes for each meeting below.`
+            : 'You are not currently assigned to any committees.';
+
+        renderDashboard(session, myMeetings);
+      } catch (err) {
+        document.getElementById('meetingsContainer').innerHTML = 
+          '<div class="alert alert-info">Unable to load meetings. Please try again later.</div>';
+      }
+    })();
+  </script>
+</body>
+</html>
