@@ -143,6 +143,10 @@ function renderMeetingsCalendar(containerId, meetings, options = {}) {
   });
 
   const committeeColorMap = buildCommitteeColorMap(datedMeetings);
+  const firstMeetingDate = parseCalendarDate(datedMeetings[0].date);
+  const firstMeetingMonth = firstMeetingDate
+    ? new Date(firstMeetingDate.getFullYear(), firstMeetingDate.getMonth(), 1)
+    : null;
 
   function renderMonth() {
     const monthLabel = state.viewMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
@@ -183,6 +187,17 @@ function renderMeetingsCalendar(containerId, meetings, options = {}) {
       `);
     }
 
+    const meetingsInMonth = datedMeetings.filter(meeting => {
+      const meetingDate = parseCalendarDate(meeting.date);
+      return meetingDate &&
+        meetingDate.getFullYear() === state.viewMonth.getFullYear() &&
+        meetingDate.getMonth() === state.viewMonth.getMonth();
+    }).length;
+
+    const monthHint = meetingsInMonth === 0
+      ? 'No meetings in this month. Use Jump to First Meeting.'
+      : `${meetingsInMonth} meeting${meetingsInMonth === 1 ? '' : 's'} in this month.`;
+
     const legendItems = Object.keys(committeeColorMap).sort().map(committee => `
       <div class="calendar-legend-item">
         <span class="calendar-legend-swatch" style="background: ${committeeColorMap[committee]};"></span>
@@ -195,8 +210,12 @@ function renderMeetingsCalendar(containerId, meetings, options = {}) {
         <div class="calendar-toolbar">
           <button type="button" class="btn btn-secondary btn-sm" data-cal-nav="prev" aria-label="Previous month">Previous</button>
           <h3 class="calendar-month-label">${calendarEscapeHtml(monthLabel)}</h3>
-          <button type="button" class="btn btn-secondary btn-sm" data-cal-nav="next" aria-label="Next month">Next</button>
+          <div style="display: flex; gap: 0.5rem;">
+            <button type="button" class="btn btn-secondary btn-sm" data-cal-nav="jump-first" aria-label="Jump to first meeting month">Jump to First Meeting</button>
+            <button type="button" class="btn btn-secondary btn-sm" data-cal-nav="next" aria-label="Next month">Next</button>
+          </div>
         </div>
+        <div class="calendar-month-hint">${calendarEscapeHtml(monthHint)}</div>
         <div class="calendar-legend">${legendItems}</div>
         <div class="calendar-grid-header">
           <div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div>
@@ -207,8 +226,13 @@ function renderMeetingsCalendar(containerId, meetings, options = {}) {
 
     container.querySelectorAll('[data-cal-nav]').forEach(btn => {
       btn.addEventListener('click', function() {
-        const delta = this.getAttribute('data-cal-nav') === 'prev' ? -1 : 1;
-        state.viewMonth = new Date(state.viewMonth.getFullYear(), state.viewMonth.getMonth() + delta, 1);
+        const nav = this.getAttribute('data-cal-nav');
+        if (nav === 'jump-first' && firstMeetingMonth) {
+          state.viewMonth = new Date(firstMeetingMonth.getFullYear(), firstMeetingMonth.getMonth(), 1);
+        } else {
+          const delta = nav === 'prev' ? -1 : 1;
+          state.viewMonth = new Date(state.viewMonth.getFullYear(), state.viewMonth.getMonth() + delta, 1);
+        }
         renderMonth();
       });
     });
