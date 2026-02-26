@@ -82,17 +82,13 @@ function renderSubmissionsTable(submissions) {
             <th>Date</th>
             <th>Submitted</th>
             <th>Attended</th>
-            <th>Notes / Document</th>
+            <th>Notes</th>
           </tr>
         </thead>
         <tbody>
           ${filtered.length === 0 
             ? '<tr><td colspan="7" class="empty-state">No submissions found.</td></tr>'
-            : filtered.map(s => {
-              const notesDisplay = s.attachmentName 
-                ? `<a href="#" class="doc-download" data-index="${submissions.indexOf(s)}" title="Download ${escapeHtml(s.attachmentName)}">📄 ${escapeHtml(s.attachmentName)}</a>`
-                : escapeHtml((s.notes || '').substring(0, 50)) + ((s.notes || '').length > 50 ? '...' : '');
-              return `
+            : filtered.map(s => `
               <tr>
                 <td>${escapeHtml(s.pid)}</td>
                 <td>${escapeHtml(s.committeeName || '')}</td>
@@ -100,9 +96,9 @@ function renderSubmissionsTable(submissions) {
                 <td>${formatDate(s.meetingDate)}</td>
                 <td>${formatTimestamp(s.timestamp)}</td>
                 <td>${s.attendanceConfirmed ? 'Yes' : 'No'}</td>
-                <td>${notesDisplay}</td>
+                <td>${escapeHtml((s.notes || '').substring(0, 80))}${(s.notes || '').length > 80 ? '...' : ''}</td>
               </tr>
-            `}).join('')}
+            `).join('')}
         </tbody>
       </table>
     </div>
@@ -126,21 +122,6 @@ function renderSubmissionsTable(submissions) {
     });
   }
 
-  // Document download handlers
-  container.querySelectorAll('.doc-download').forEach(link => {
-    link.addEventListener('click', function(e) {
-      e.preventDefault();
-      const idx = parseInt(this.dataset.index, 10);
-      const subs = getSubmissions();
-      const sub = subs[idx];
-      if (sub && sub.attachmentData && sub.attachmentName) {
-        const a = document.createElement('a');
-        a.href = sub.attachmentData;
-        a.download = sub.attachmentName;
-        a.click();
-      }
-    });
-  });
 }
 
 /**
@@ -348,7 +329,7 @@ function exportSubmissionsPDF() {
     formatDate(s.meetingDate),
     (formatTimestamp(s.timestamp) || '').substring(0, 10),
     s.attendanceConfirmed ? 'Yes' : 'No',
-    (s.attachmentName || s.notes || '').substring(0, 35)
+    (s.notes || '').substring(0, 35)
   ]);
   if (typeof doc.autoTable === 'function') {
     doc.autoTable({ head: headers, body: rows, startY: 30, styles: { fontSize: 7 } });
@@ -376,7 +357,7 @@ function exportSubmissionsWord() {
       <td>${formatDate(s.meetingDate)}</td>
       <td>${formatTimestamp(s.timestamp)}</td>
       <td>${s.attendanceConfirmed ? 'Yes' : 'No'}</td>
-      <td>${escapeHtml(s.attachmentName || s.notes || '')}</td>
+      <td>${escapeHtml(s.notes || '')}</td>
     </tr>
   `).join('');
   const html = `<!DOCTYPE html>

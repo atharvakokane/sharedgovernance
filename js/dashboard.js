@@ -6,7 +6,7 @@
 /**
  * Gets committees assigned to a senator.
  * @param {string} pid - Senator's PID
- * @param {Array} assignments - Assignments from assignments.json (with override)
+ * @param {Array} assignments - Assignments array (with admin overrides applied)
  * @returns {Array} Committee names
  */
 function getAssignedCommittees(pid, assignments) {
@@ -55,20 +55,14 @@ function renderDashboard(session, meetings) {
           </label>
         </div>
         <div class="form-group">
-          <label for="notes-${meeting.id}">Meeting Notes (text)</label>
+          <label for="notes-${meeting.id}">Meeting Notes</label>
           <textarea id="notes-${meeting.id}" name="notes" placeholder="Enter your meeting notes here..."></textarea>
-        </div>
-        <div class="form-group">
-          <label for="attachment-${meeting.id}">Or attach PDF/Word document</label>
-          <input type="file" id="attachment-${meeting.id}" name="attachment" accept=".pdf,.doc,.docx" class="file-input">
-          <span class="file-hint">PDF or Word (.doc, .docx) — max 2MB</span>
         </div>
         <button type="submit" class="btn btn-primary btn-sm">Submit</button>
       </form>
     </div>
   `).join('');
 
-  // Attach form handlers
   container.querySelectorAll('.meeting-submission-form').forEach(form => {
     form.addEventListener('submit', function(e) {
       e.preventDefault();
@@ -76,20 +70,15 @@ function renderDashboard(session, meetings) {
       const meeting = meetings.find(m => m.id === meetingId);
       const attendance = this.querySelector('[name="attendance"]').checked;
       const notes = this.querySelector('[name="notes"]').value.trim();
-      const fileInput = this.querySelector('[name="attachment"]');
-      handleSubmission(session, meeting, attendance, notes, this, fileInput);
+      handleSubmission(session, meeting, attendance, notes, this);
     });
   });
 }
 
-/** Max attachment size: 2MB (base64 adds ~33% overhead) */
-const MAX_ATTACHMENT_BYTES = 2 * 1024 * 1024;
-
 /**
- * Handles form submission - saves to localStorage and shows confirmation.
- * Supports optional PDF/Word attachment.
+ * Saves submission to localStorage and shows confirmation.
  */
-function handleSubmission(session, meeting, attendance, notes, formEl, fileInput) {
+function handleSubmission(session, meeting, attendance, notes, formEl) {
   const submission = {
     pid: session.pid,
     committeeName: meeting.committee,
@@ -101,68 +90,37 @@ function handleSubmission(session, meeting, attendance, notes, formEl, fileInput
     notes: notes
   };
 
-  const file = fileInput?.files?.[0];
-  if (file) {
-    if (file.size > MAX_ATTACHMENT_BYTES) {
-      const alertEl = document.createElement('div');
-      alertEl.className = 'alert alert-info';
-      alertEl.textContent = 'File too large. Maximum size is 2MB.';
-      formEl.insertBefore(alertEl, formEl.firstChild);
-      setTimeout(() => alertEl.remove(), 4000);
-      return;
-    }
-    const reader = new FileReader();
-    reader.onload = function() {
-      submission.attachmentName = file.name;
-      submission.attachmentData = reader.result;
-      saveAndConfirm(submission, formEl);
-    };
-    reader.readAsDataURL(file);
-  } else {
-    saveAndConfirm(submission, formEl);
-  }
-}
-
-function saveAndConfirm(submission, formEl) {
   saveSubmission(submission);
 
-  // Visual confirmation
-  const card = formEl.closest('.meeting-card');
-  const existingAlert = card.querySelector('.alert-success');
+  var card = formEl.closest('.meeting-card');
+  var existingAlert = card.querySelector('.alert-success');
   if (existingAlert) existingAlert.remove();
 
-  const alert = document.createElement('div');
-  alert.className = 'alert alert-success';
-  alert.textContent = 'Submission received. Thank you!';
-  alert.setAttribute('role', 'status');
-  formEl.insertBefore(alert, formEl.firstChild);
+  var alertEl = document.createElement('div');
+  alertEl.className = 'alert alert-success';
+  alertEl.textContent = 'Submission received. Thank you!';
+  alertEl.setAttribute('role', 'status');
+  formEl.insertBefore(alertEl, formEl.firstChild);
 
-  // Clear form
   formEl.reset();
-
-  // Remove alert after 5 seconds
-  setTimeout(() => alert.remove(), 5000);
+  setTimeout(function() { alertEl.remove(); }, 5000);
 }
 
-/**
- * Escapes HTML to prevent XSS.
- */
 function escapeHtml(text) {
   if (!text) return '';
-  const div = document.createElement('div');
-  div.textContent = text;
-  return div.innerHTML;
+  return String(text)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
 }
 
-/**
- * Formats date string for display.
- */
 function formatDate(dateStr) {
   if (!dateStr) return '';
   try {
-    const d = new Date(dateStr + 'T12:00:00');
+    var d = new Date(dateStr + 'T12:00:00');
     return d.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
-  } catch {
+  } catch (e) {
     return dateStr;
   }
 }
