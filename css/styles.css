@@ -471,11 +471,18 @@ body {
 .calendar-event-name {
   display: block;
   color: var(--color-text);
+  font-weight: 600;
+}
+
+.calendar-event-meeting {
+  display: block;
+  color: var(--color-text-muted);
 }
 
 .calendar-event-time {
   display: block;
-  color: var(--color-text-muted);
+  color: var(--color-text);
+  font-weight: 600;
 }
 
 /* ===== Empty State ===== */
