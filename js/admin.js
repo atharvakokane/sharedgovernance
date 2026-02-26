@@ -3,35 +3,6 @@
  * Cabinet control center: view submissions, manage assignments, manage meetings.
  */
 
-var _jsPdfLoaded = false;
-var _jsPdfLoading = false;
-var _jsPdfCallbacks = [];
-
-/**
- * Lazily loads jsPDF and autoTable from CDN only when needed.
- * Calls the callback once both scripts are available.
- */
-function lazyLoadJsPDF(callback) {
-  if (_jsPdfLoaded) { callback(); return; }
-  _jsPdfCallbacks.push(callback);
-  if (_jsPdfLoading) return;
-  _jsPdfLoading = true;
-
-  var s1 = document.createElement('script');
-  s1.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
-  s1.onload = function() {
-    var s2 = document.createElement('script');
-    s2.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js';
-    s2.onload = function() {
-      _jsPdfLoaded = true;
-      _jsPdfCallbacks.forEach(function(cb) { cb(); });
-      _jsPdfCallbacks = [];
-    };
-    document.head.appendChild(s2);
-  };
-  document.head.appendChild(s1);
-}
-
 // Debounce helper - delays rapid filter input to avoid blocking re-renders
 function debounce(fn, ms) {
   let timeout;
@@ -305,77 +276,6 @@ function exportSubmissionsJSON() {
   const a = document.createElement('a');
   a.href = url;
   a.download = `governance-submissions-${new Date().toISOString().slice(0, 10)}.json`;
-  a.click();
-  URL.revokeObjectURL(url);
-}
-
-/**
- * Exports submissions as a PDF document.
- */
-function exportSubmissionsPDF() {
-  if (typeof jspdf === 'undefined') {
-    alert('PDF library loading. Please try again in a moment.');
-    return;
-  }
-  const submissions = getSubmissions();
-  const doc = new jspdf.jsPDF({ orientation: 'landscape', unit: 'pt', format: 'a4' });
-  doc.setFontSize(14);
-  doc.text('VT Shared Governance - Submissions', 14, 22);
-  const headers = [['PID', 'Committee', 'Meeting', 'Date', 'Submitted', 'Attended', 'Notes']];
-  const rows = submissions.map(s => [
-    s.pid || '',
-    (s.committeeName || '').substring(0, 22),
-    (s.meetingName || '').substring(0, 22),
-    formatDate(s.meetingDate),
-    (formatTimestamp(s.timestamp) || '').substring(0, 10),
-    s.attendanceConfirmed ? 'Yes' : 'No',
-    (s.notes || '').substring(0, 35)
-  ]);
-  if (typeof doc.autoTable === 'function') {
-    doc.autoTable({ head: headers, body: rows, startY: 30, styles: { fontSize: 7 } });
-  } else {
-    doc.setFontSize(8);
-    let y = 40;
-    rows.forEach((row, i) => {
-      doc.text(row.join(' | '), 14, y);
-      y += 10;
-    });
-  }
-  doc.save(`governance-submissions-${new Date().toISOString().slice(0, 10)}.pdf`);
-}
-
-/**
- * Exports submissions as a Word document (.doc).
- */
-function exportSubmissionsWord() {
-  const submissions = getSubmissions();
-  const rows = submissions.map(s => `
-    <tr>
-      <td>${escapeHtml(s.pid || '')}</td>
-      <td>${escapeHtml(s.committeeName || '')}</td>
-      <td>${escapeHtml(s.meetingName || '')}</td>
-      <td>${formatDate(s.meetingDate)}</td>
-      <td>${formatTimestamp(s.timestamp)}</td>
-      <td>${s.attendanceConfirmed ? 'Yes' : 'No'}</td>
-      <td>${escapeHtml(s.notes || '')}</td>
-    </tr>
-  `).join('');
-  const html = `<!DOCTYPE html>
-<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word">
-<head><meta charset="utf-8"><title>Governance Submissions</title></head>
-<body>
-<h1>VT Shared Governance - Submissions</h1>
-<table border="1" cellpadding="4" cellspacing="0" style="border-collapse:collapse;width:100%">
-<thead><tr><th>PID</th><th>Committee</th><th>Meeting</th><th>Date</th><th>Submitted</th><th>Attended</th><th>Notes/Document</th></tr></thead>
-<tbody>${rows}</tbody>
-</table>
-</body>
-</html>`;
-  const blob = new Blob(['\ufeff' + html], { type: 'application/msword' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `governance-submissions-${new Date().toISOString().slice(0, 10)}.doc`;
   a.click();
   URL.revokeObjectURL(url);
 }

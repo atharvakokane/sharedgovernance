@@ -28,8 +28,6 @@
           View submissions, manage committee assignments, and edit meetings.
         </p>
         <div style="display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center;">
-          <button type="button" class="btn btn-primary" id="exportPdfBtn">Export PDF</button>
-          <button type="button" class="btn btn-primary" id="exportWordBtn">Export Word</button>
           <button type="button" class="btn btn-secondary" id="exportJsonBtn">Export JSON</button>
           <label class="btn btn-secondary" style="margin: 0; cursor: pointer;">
             Import
@@ -85,11 +83,7 @@
         redirectToLogin();
       });
 
-      // Export buttons
-      document.getElementById('exportPdfBtn').addEventListener('click', function() {
-        lazyLoadJsPDF(function() { exportSubmissionsPDF(); });
-      });
-      document.getElementById('exportWordBtn').addEventListener('click', exportSubmissionsWord);
+      // Export button
       document.getElementById('exportJsonBtn').addEventListener('click', exportSubmissionsJSON);
 
       // Import button
