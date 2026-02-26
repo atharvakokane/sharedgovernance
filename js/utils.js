@@ -128,8 +128,8 @@ function renderMeetingsCalendar(containerId, meetings, options = {}) {
     return;
   }
 
-  const firstMonthDate = parseCalendarDate(datedMeetings[0].date);
-  const initialMonth = firstMonthDate ? new Date(firstMonthDate.getFullYear(), firstMonthDate.getMonth(), 1) : getCurrentCalendarMonth();
+  const todayKey = toCalendarKey(new Date());
+  const initialMonth = getCurrentCalendarMonth();
 
   const state = {
     viewMonth: initialMonth
@@ -170,8 +170,9 @@ function renderMeetingsCalendar(containerId, meetings, options = {}) {
         `;
       }).join('');
 
+      const isToday = dayKey === todayKey;
       cells.push(`
-        <div class="calendar-day ${dayMeetings.length ? 'calendar-day-has-events' : ''}">
+        <div class="calendar-day ${dayMeetings.length ? 'calendar-day-has-events' : ''} ${isToday ? 'calendar-day-today' : ''}">
           <div class="calendar-day-number">${day}</div>
           <div class="calendar-events">${meetingChips}</div>
         </div>
