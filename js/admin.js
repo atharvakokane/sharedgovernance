@@ -229,8 +229,10 @@ function renderAssignmentsSection(assignments, meetings, allowedCommittees = [])
 /**
  * Renders the meetings management section.
  * @param {Array} meetings - Meetings data
+ * @param {Array} allowedCommittees - Allowed committees from committees.json
  */
-function renderMeetingsSection(meetings) {
+function renderMeetingsSection(meetings, allowedCommittees) {
+  allowedCommittees = allowedCommittees || [];
   const container = document.getElementById('meetingsSection');
   if (!container) return;
 

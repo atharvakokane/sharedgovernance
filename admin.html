@@ -114,11 +114,20 @@
         var meetings = getMeetingsWithOverride(results[0]);
         var assignments = getAssignmentsWithOverride(results[1]);
         var allowedCommittees = Array.isArray(results[2]) ? results[2] : [];
-        renderAssignmentsSection(assignments, meetings, allowedCommittees);
-        renderMeetingsSection(meetings, allowedCommittees);
-      }).catch(function() {
-        document.getElementById('assignmentsSection').innerHTML = '<div class="alert alert-info">Unable to load. Refresh to retry.</div>';
-        document.getElementById('meetingsSection').innerHTML = '<div class="alert alert-info">Unable to load. Refresh to retry.</div>';
+
+        try {
+          renderAssignmentsSection(assignments, meetings, allowedCommittees);
+        } catch (e) {
+          document.getElementById('assignmentsSection').innerHTML = '<div class="alert alert-info">Error loading assignments: ' + e.message + '</div>';
+        }
+        try {
+          renderMeetingsSection(meetings, allowedCommittees);
+        } catch (e) {
+          document.getElementById('meetingsSection').innerHTML = '<div class="alert alert-info">Error loading meetings: ' + e.message + '</div>';
+        }
+      }).catch(function(e) {
+        document.getElementById('assignmentsSection').innerHTML = '<div class="alert alert-info">Unable to load data. Refresh to retry.</div>';
+        document.getElementById('meetingsSection').innerHTML = '<div class="alert alert-info">Unable to load data. Refresh to retry.</div>';
       });
     })();
   </script>
