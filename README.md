@@ -26,7 +26,8 @@ A static web application for Virginia Tech Shared Governance appointees to log m
 └── data/
     ├── users.json      # PID, password, role (senator/admin)
     ├── assignments.json # Senator-to-committee assignments
-    ├── meetings.json   # Meeting data (mirrors governance calendar)
+    ├── meetings.json   # Meeting data (mirrors governance.vt.edu/UpcomingEvents)
+    ├── committees.json # Allowed committees list (17 bodies)
     └── submissions.json # Seed file (submissions stored in localStorage)
 ```
 
@@ -48,18 +49,23 @@ A static web application for Virginia Tech Shared Governance appointees to log m
 ```
 
 ### meetings.json
+Meeting data mirrors the [VT Governance Upcoming Events](https://governance.vt.edu/UpcomingEvents) calendar. Only meetings for allowed committees (see committees.json) are included.
+
 ```json
 [
   {
     "id": "m1",
-    "committee": "Academic Affairs Committee",
-    "name": "Curriculum Review Meeting",
-    "date": "2025-03-01",
-    "time": "2:00 PM",
-    "location": "Squires 340"
+    "committee": "Commission on Faculty Affairs",
+    "name": "Commission on Faculty Affairs Meeting",
+    "date": "2025-02-27",
+    "time": "10:30 AM - 12:00 PM",
+    "location": "TBD"
   }
 ]
 ```
+
+### committees.json
+Defines the 17 allowed Shared Governance committees. Used for admin dropdowns and validation.
 
 ## Deployment on GitHub Pages
 

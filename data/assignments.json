@@ -1,10 +1,16 @@
 [
   {
     "pid": "12345678",
-    "committees": ["Academic Affairs Committee", "Student Life Committee"]
+    "committees": [
+      "Commission on Faculty Affairs",
+      "Campus Development Committee"
+    ]
   },
   {
     "pid": "87654321",
-    "committees": ["Finance Committee", "Academic Affairs Committee"]
+    "committees": [
+      "Commission on Research",
+      "University Curriculum Committee for General Education"
+    ]
   }
 ]

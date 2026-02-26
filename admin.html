@@ -68,64 +68,59 @@
     </main>
   </div>
 
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
   <script src="js/utils.js"></script>
   <script src="js/auth.js"></script>
   <script src="js/admin.js"></script>
   <script>
-    // Session check - admins only
-    const session = requireAuth('admin');
-    if (!session) return;
+    (function() {
+      // Always attach UI handlers first so logout always works
+      document.getElementById('menuToggle').addEventListener('click', function() {
+        document.getElementById('navMain').classList.toggle('open');
+      });
+      document.getElementById('logoutBtn').addEventListener('click', function() {
+        clearSession();
+        redirectToLogin();
+      });
 
-    // Mobile menu toggle
-    document.getElementById('menuToggle').addEventListener('click', function() {
-      document.getElementById('navMain').classList.toggle('open');
-    });
+      // Export buttons
+      document.getElementById('exportPdfBtn').addEventListener('click', function() {
+        lazyLoadJsPDF(function() { exportSubmissionsPDF(); });
+      });
+      document.getElementById('exportWordBtn').addEventListener('click', exportSubmissionsWord);
+      document.getElementById('exportJsonBtn').addEventListener('click', exportSubmissionsJSON);
 
-    // Logout
-    document.getElementById('logoutBtn').addEventListener('click', function() {
-      clearSession();
-      redirectToLogin();
-    });
+      // Import button
+      document.getElementById('importFile').addEventListener('change', function(e) {
+        var file = e.target.files && e.target.files[0];
+        if (file) {
+          importSubmissions(file, function() { renderSubmissionsTable(getSubmissions()); });
+          e.target.value = '';
+        }
+      });
 
-    // Export buttons
-    document.getElementById('exportPdfBtn').addEventListener('click', exportSubmissionsPDF);
-    document.getElementById('exportWordBtn').addEventListener('click', exportSubmissionsWord);
-    document.getElementById('exportJsonBtn').addEventListener('click', exportSubmissionsJSON);
+      // Session check - redirect to login if not authenticated
+      var session = requireAuth('admin');
+      if (!session) return;
 
-    // Import button
-    document.getElementById('importFile').addEventListener('change', function(e) {
-      const file = e.target.files?.[0];
-      if (file) {
-        importSubmissions(file, () => renderSubmissionsTable(getSubmissions()));
-        e.target.value = '';
-      }
-    });
-
-    // Progressive load: submissions first (instant), then assignments/meetings when data arrives
-    (async function init() {
+      // Render submissions immediately (from localStorage, no fetch needed)
       renderSubmissionsTable(getSubmissions());
-      try {
-        const [meetingsFromFile, assignmentsFromFile] = await Promise.all([
-          fetchData('meetings.json'),
-          fetchData('assignments.json')
-        ]);
-        const meetings = getMeetingsWithOverride(meetingsFromFile);
-        const assignments = getAssignmentsWithOverride(assignmentsFromFile);
-        requestAnimationFrame(() => {
-          renderAssignmentsSection(assignments, meetings);
-          requestAnimationFrame(() => renderMeetingsSection(meetings));
-        });
-      } catch {
-        showLoadError();
-      }
-    })();
 
-    function showLoadError() {
-      document.getElementById('assignmentsSection').innerHTML = '<div class="alert alert-info">Unable to load. Refresh to retry.</div>';
-      document.getElementById('meetingsSection').innerHTML = '<div class="alert alert-info">Unable to load. Refresh to retry.</div>';
-    }
+      // Load assignments and meetings data
+      Promise.all([
+        fetchData('meetings.json'),
+        fetchData('assignments.json'),
+        fetchData('committees.json').catch(function() { return []; })
+      ]).then(function(results) {
+        var meetings = getMeetingsWithOverride(results[0]);
+        var assignments = getAssignmentsWithOverride(results[1]);
+        var allowedCommittees = Array.isArray(results[2]) ? results[2] : [];
+        renderAssignmentsSection(assignments, meetings, allowedCommittees);
+        renderMeetingsSection(meetings, allowedCommittees);
+      }).catch(function() {
+        document.getElementById('assignmentsSection').innerHTML = '<div class="alert alert-info">Unable to load. Refresh to retry.</div>';
+        document.getElementById('meetingsSection').innerHTML = '<div class="alert alert-info">Unable to load. Refresh to retry.</div>';
+      });
+    })();
   </script>
 </body>
 </html>

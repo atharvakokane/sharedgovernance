@@ -3,6 +3,35 @@
  * Cabinet control center: view submissions, manage assignments, manage meetings.
  */
 
+var _jsPdfLoaded = false;
+var _jsPdfLoading = false;
+var _jsPdfCallbacks = [];
+
+/**
+ * Lazily loads jsPDF and autoTable from CDN only when needed.
+ * Calls the callback once both scripts are available.
+ */
+function lazyLoadJsPDF(callback) {
+  if (_jsPdfLoaded) { callback(); return; }
+  _jsPdfCallbacks.push(callback);
+  if (_jsPdfLoading) return;
+  _jsPdfLoading = true;
+
+  var s1 = document.createElement('script');
+  s1.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+  s1.onload = function() {
+    var s2 = document.createElement('script');
+    s2.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js';
+    s2.onload = function() {
+      _jsPdfLoaded = true;
+      _jsPdfCallbacks.forEach(function(cb) { cb(); });
+      _jsPdfCallbacks = [];
+    };
+    document.head.appendChild(s2);
+  };
+  document.head.appendChild(s1);
+}
+
 // Debounce helper - delays rapid filter input to avoid blocking re-renders
 function debounce(fn, ms) {
   let timeout;
@@ -118,12 +147,16 @@ function renderSubmissionsTable(submissions) {
  * Renders the assignments management section.
  * @param {Array} assignments - Assignments data
  * @param {Array} meetings - Meetings (for committee list)
+ * @param {Array} allowedCommittees - Allowed committees from committees.json
  */
-function renderAssignmentsSection(assignments, meetings) {
+function renderAssignmentsSection(assignments, meetings, allowedCommittees = []) {
   const container = document.getElementById('assignmentsSection');
   if (!container) return;
 
-  const committees = [...new Set(meetings.map(m => m.committee).filter(Boolean))].sort();
+  const fromMeetings = [...new Set(meetings.map(m => m.committee).filter(Boolean))];
+  const committees = allowedCommittees.length
+    ? allowedCommittees
+    : [...new Set([...fromMeetings])].sort();
 
   const html = `
     <div class="filter-bar">
@@ -172,7 +205,7 @@ function renderAssignmentsSection(assignments, meetings) {
       assignments.push({ pid, committees: [committee] });
     }
     saveAssignmentsOverride(assignments);
-    renderAssignmentsSection(assignments, meetings);
+    renderAssignmentsSection(assignments, meetings, allowedCommittees);
   });
 
   document.getElementById('removeAssignment').addEventListener('click', () => {
@@ -188,7 +221,7 @@ function renderAssignmentsSection(assignments, meetings) {
         assignments.splice(idx, 1);
       }
       saveAssignmentsOverride(assignments);
-      renderAssignmentsSection(assignments, meetings);
+      renderAssignmentsSection(assignments, meetings, allowedCommittees);
     }
   });
 }
@@ -201,8 +234,10 @@ function renderMeetingsSection(meetings) {
   const container = document.getElementById('meetingsSection');
   if (!container) return;
 
+  const committeeOptions = allowedCommittees.map(c => `<option value="${escapeHtml(c)}">`).join('');
   const html = `
     <div class="table-responsive">
+      <datalist id="meetingCommitteeList">${committeeOptions}</datalist>
       <table class="data-table">
         <thead>
           <tr>
@@ -217,7 +252,7 @@ function renderMeetingsSection(meetings) {
         <tbody>
           ${meetings.map(m => `
             <tr data-meeting-id="${escapeHtml(m.id)}">
-              <td><input type="text" value="${escapeHtml(m.committee || '')}" data-field="committee" class="inline-edit"></td>
+              <td><input type="text" value="${escapeHtml(m.committee || '')}" data-field="committee" class="inline-edit" list="meetingCommitteeList" placeholder="Select from allowed committees"></td>
               <td><input type="text" value="${escapeHtml(m.name || '')}" data-field="name" class="inline-edit"></td>
               <td><input type="date" value="${escapeHtml(m.date || '')}" data-field="date" class="inline-edit"></td>
               <td><input type="text" value="${escapeHtml(m.time || '')}" data-field="time" class="inline-edit" placeholder="e.g. 2:00 PM"></td>
@@ -254,13 +289,15 @@ function renderMeetingsSection(meetings) {
       const id = row.dataset.meetingId;
       const newMeetings = meetings.filter(m => m.id !== id);
       saveMeetingsOverride(newMeetings);
-      renderMeetingsSection(newMeetings);
+      renderMeetingsSection(newMeetings, allowedCommittees);
     });
   });
 
   document.getElementById('addMeetingBtn').addEventListener('click', () => {
     const newId = generateMeetingId(meetings);
-    const committees = [...new Set(meetings.map(m => m.committee))];
+    const committees = allowedCommittees.length
+      ? allowedCommittees
+      : [...new Set(meetings.map(m => m.committee).filter(Boolean))];
     const committee = committees[0] || 'New Committee';
     meetings.push({
       id: newId,
@@ -271,7 +308,7 @@ function renderMeetingsSection(meetings) {
       location: ''
     });
     saveMeetingsOverride(meetings);
-    renderMeetingsSection(meetings);
+    renderMeetingsSection(meetings, allowedCommittees);
   });
 }
 

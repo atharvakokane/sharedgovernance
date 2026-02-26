@@ -36,44 +36,40 @@
   <script src="js/auth.js"></script>
   <script src="js/dashboard.js"></script>
   <script>
-    // Session check - redirect to login if not authenticated
-    const session = requireAuth('senator');
-    if (!session) return;
+    (function() {
+      // Always attach UI handlers first so logout always works
+      document.getElementById('menuToggle').addEventListener('click', function() {
+        document.getElementById('navMain').classList.toggle('open');
+      });
+      document.getElementById('logoutBtn').addEventListener('click', function() {
+        clearSession();
+        redirectToLogin();
+      });
 
-    // Mobile menu toggle
-    document.getElementById('menuToggle').addEventListener('click', function() {
-      document.getElementById('navMain').classList.toggle('open');
-    });
+      // Session check - redirect to login if not authenticated
+      var session = requireAuth('senator');
+      if (!session) return;
 
-    // Logout
-    document.getElementById('logoutBtn').addEventListener('click', function() {
-      clearSession();
-      redirectToLogin();
-    });
+      // Load and render dashboard
+      Promise.all([
+        fetchData('meetings.json'),
+        fetchData('assignments.json')
+      ]).then(function(results) {
+        var assignments = getAssignmentsWithOverride(results[1]);
+        var meetings = getMeetingsWithOverride(results[0]);
+        var committees = getAssignedCommittees(session.pid, assignments);
+        var myMeetings = filterMeetingsByCommittees(meetings, committees);
 
-    // Load and render dashboard
-    (async function init() {
-      try {
-        const [meetingsFromFile, assignmentsFromFile] = await Promise.all([
-          fetchData('meetings.json'),
-          fetchData('assignments.json')
-        ]);
-
-        const assignments = getAssignmentsWithOverride(assignmentsFromFile);
-        const meetings = getMeetingsWithOverride(meetingsFromFile);
-        const committees = getAssignedCommittees(session.pid, assignments);
-        const myMeetings = filterMeetingsByCommittees(meetings, committees);
-
-        document.getElementById('welcomeMessage').textContent = 
-          committees.length > 0 
-            ? `You are assigned to: ${committees.join(', ')}. Submit attendance and notes for each meeting below.`
+        document.getElementById('welcomeMessage').textContent =
+          committees.length > 0
+            ? 'You are assigned to: ' + committees.join(', ') + '. Submit attendance and notes below.'
             : 'You are not currently assigned to any committees.';
 
         renderDashboard(session, myMeetings);
-      } catch (err) {
-        document.getElementById('meetingsContainer').innerHTML = 
+      }).catch(function() {
+        document.getElementById('meetingsContainer').innerHTML =
           '<div class="alert alert-info">Unable to load meetings. Please try again later.</div>';
-      }
+      });
     })();
   </script>
 </body>

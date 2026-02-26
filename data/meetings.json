@@ -1,34 +1,50 @@
 [
   {
     "id": "m1",
-    "committee": "Academic Affairs Committee",
-    "name": "Curriculum Review Meeting",
-    "date": "2025-03-01",
-    "time": "2:00 PM",
-    "location": "Squires 340"
+    "committee": "Commission on Faculty Affairs",
+    "name": "Commission on Faculty Affairs Meeting",
+    "date": "2025-02-27",
+    "time": "10:30 AM - 12:00 PM",
+    "location": "TBD"
   },
   {
     "id": "m2",
-    "committee": "Academic Affairs Committee",
-    "name": "Policy Discussion",
-    "date": "2025-03-15",
-    "time": "3:30 PM",
-    "location": "Newman Library 207"
+    "committee": "Campus Development Committee",
+    "name": "Campus Development Committee",
+    "date": "2025-03-03",
+    "time": "3:30 PM - 4:30 PM",
+    "location": ""
   },
   {
     "id": "m3",
-    "committee": "Student Life Committee",
-    "name": "Campus Events Planning",
-    "date": "2025-03-05",
-    "time": "1:00 PM",
-    "location": "Squires 245"
+    "committee": "University Curriculum Committee for General Education",
+    "name": "UCCGE Meeting",
+    "date": "2025-03-04",
+    "time": "2:30 PM - 4:00 PM",
+    "location": "Zoom"
   },
   {
     "id": "m4",
-    "committee": "Finance Committee",
-    "name": "Budget Allocation Review",
-    "date": "2025-03-10",
-    "time": "4:00 PM",
-    "location": "Burruss Hall 324"
+    "committee": "Commission on Graduate and Professional Studies and Policies",
+    "name": "CGPS&P Meeting",
+    "date": "2025-03-04",
+    "time": "3:30 PM - 5:00 PM",
+    "location": ""
+  },
+  {
+    "id": "m5",
+    "committee": "Commission on Staff Policies and Affairs",
+    "name": "Commission on Staff Policies and Affairs",
+    "date": "2025-03-05",
+    "time": "1:00 PM - 2:00 PM",
+    "location": "Zoom"
+  },
+  {
+    "id": "m6",
+    "committee": "Commission on Research",
+    "name": "Commission on Research",
+    "date": "2025-03-05",
+    "time": "3:30 PM - 5:00 PM",
+    "location": "Zoom"
   }
 ]
