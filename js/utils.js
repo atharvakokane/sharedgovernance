@@ -12,6 +12,7 @@ const GOV_STORAGE_KEYS = {
   MEETINGS_OVERRIDE: 'vt_gov_meetings_override',
   ASSIGNMENTS_OVERRIDE: 'vt_gov_assignments_override'
 };
+const GOV_DATA_VERSION = '20260228';
 
 /**
  * Fetches JSON data from the /data folder.
@@ -60,9 +61,15 @@ function saveSubmission(submission) {
  * @returns {Array} Merged/override meetings
  */
 function getMeetingsWithOverride(meetingsFromFile) {
+  const versionKey = `${GOV_STORAGE_KEYS.MEETINGS_OVERRIDE}_version`;
   try {
     const override = localStorage.getItem(GOV_STORAGE_KEYS.MEETINGS_OVERRIDE);
-    if (override) return JSON.parse(override);
+    const overrideVersion = localStorage.getItem(versionKey);
+    if (override && overrideVersion === GOV_DATA_VERSION) return JSON.parse(override);
+  } catch {}
+  try {
+    localStorage.removeItem(GOV_STORAGE_KEYS.MEETINGS_OVERRIDE);
+    localStorage.setItem(versionKey, GOV_DATA_VERSION);
   } catch {}
   return meetingsFromFile;
 }
@@ -73,6 +80,7 @@ function getMeetingsWithOverride(meetingsFromFile) {
  */
 function saveMeetingsOverride(meetings) {
   localStorage.setItem(GOV_STORAGE_KEYS.MEETINGS_OVERRIDE, JSON.stringify(meetings));
+  localStorage.setItem(`${GOV_STORAGE_KEYS.MEETINGS_OVERRIDE}_version`, GOV_DATA_VERSION);
 }
 
 /**
