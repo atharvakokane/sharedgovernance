@@ -193,6 +193,26 @@ body {
   margin-right: 0.5rem;
 }
 
+.file-input {
+  padding: 0.5rem 0;
+}
+
+.file-hint {
+  display: block;
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+  margin-top: 0.25rem;
+}
+
+.doc-download {
+  color: var(--color-primary);
+  text-decoration: none;
+}
+
+.doc-download:hover {
+  text-decoration: underline;
+}
+
 /* ===== Buttons ===== */
 .btn {
   display: inline-flex;

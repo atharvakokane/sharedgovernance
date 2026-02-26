@@ -3,8 +3,18 @@
  * Cabinet control center: view submissions, manage assignments, manage meetings.
  */
 
+// Debounce helper - delays rapid filter input to avoid blocking re-renders
+function debounce(fn, ms) {
+  let timeout;
+  return function(...args) {
+    clearTimeout(timeout);
+    timeout = setTimeout(() => fn.apply(this, args), ms);
+  };
+}
+
 /**
  * Renders the submissions table with filter controls.
+ * Uses debounced filtering for responsive performance.
  * @param {Array} submissions - All submissions
  */
 function renderSubmissionsTable(submissions) {
@@ -43,13 +53,17 @@ function renderSubmissionsTable(submissions) {
             <th>Date</th>
             <th>Submitted</th>
             <th>Attended</th>
-            <th>Notes</th>
+            <th>Notes / Document</th>
           </tr>
         </thead>
         <tbody>
           ${filtered.length === 0 
             ? '<tr><td colspan="7" class="empty-state">No submissions found.</td></tr>'
-            : filtered.map(s => `
+            : filtered.map(s => {
+              const notesDisplay = s.attachmentName 
+                ? `<a href="#" class="doc-download" data-index="${submissions.indexOf(s)}" title="Download ${escapeHtml(s.attachmentName)}">📄 ${escapeHtml(s.attachmentName)}</a>`
+                : escapeHtml((s.notes || '').substring(0, 50)) + ((s.notes || '').length > 50 ? '...' : '');
+              return `
               <tr>
                 <td>${escapeHtml(s.pid)}</td>
                 <td>${escapeHtml(s.committeeName || '')}</td>
@@ -57,9 +71,9 @@ function renderSubmissionsTable(submissions) {
                 <td>${formatDate(s.meetingDate)}</td>
                 <td>${formatTimestamp(s.timestamp)}</td>
                 <td>${s.attendanceConfirmed ? 'Yes' : 'No'}</td>
-                <td>${escapeHtml((s.notes || '').substring(0, 50))}${(s.notes || '').length > 50 ? '...' : ''}</td>
+                <td>${notesDisplay}</td>
               </tr>
-            `).join('')}
+            `}).join('')}
         </tbody>
       </table>
     </div>
@@ -67,10 +81,11 @@ function renderSubmissionsTable(submissions) {
 
   container.innerHTML = tableHtml;
 
-  // Re-attach filter listeners
+  // Debounced filter - 200ms delay prevents blocking on every keystroke
+  const debouncedRender = debounce(() => renderSubmissionsTable(getSubmissions()), 200);
   ['filterPid', 'filterCommittee', 'filterMeeting'].forEach(id => {
     const el = document.getElementById(id);
-    if (el) el.addEventListener('input', () => renderSubmissionsTable(getSubmissions()));
+    if (el) el.addEventListener('input', debouncedRender);
   });
   const clearBtn = document.getElementById('clearFilters');
   if (clearBtn) {
@@ -81,6 +96,22 @@ function renderSubmissionsTable(submissions) {
       renderSubmissionsTable(getSubmissions());
     });
   }
+
+  // Document download handlers
+  container.querySelectorAll('.doc-download').forEach(link => {
+    link.addEventListener('click', function(e) {
+      e.preventDefault();
+      const idx = parseInt(this.dataset.index, 10);
+      const subs = getSubmissions();
+      const sub = subs[idx];
+      if (sub && sub.attachmentData && sub.attachmentName) {
+        const a = document.createElement('a');
+        a.href = sub.attachmentData;
+        a.download = sub.attachmentName;
+        a.click();
+      }
+    });
+  });
 }
 
 /**
@@ -247,13 +278,84 @@ function renderMeetingsSection(meetings) {
 /**
  * Exports all submissions as a JSON file download.
  */
-function exportSubmissions() {
+function exportSubmissionsJSON() {
   const submissions = getSubmissions();
   const blob = new Blob([JSON.stringify(submissions, null, 2)], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
   a.download = `governance-submissions-${new Date().toISOString().slice(0, 10)}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+/**
+ * Exports submissions as a PDF document.
+ */
+function exportSubmissionsPDF() {
+  if (typeof jspdf === 'undefined') {
+    alert('PDF library loading. Please try again in a moment.');
+    return;
+  }
+  const submissions = getSubmissions();
+  const doc = new jspdf.jsPDF({ orientation: 'landscape', unit: 'pt', format: 'a4' });
+  doc.setFontSize(14);
+  doc.text('VT Shared Governance - Submissions', 14, 22);
+  const headers = [['PID', 'Committee', 'Meeting', 'Date', 'Submitted', 'Attended', 'Notes']];
+  const rows = submissions.map(s => [
+    s.pid || '',
+    (s.committeeName || '').substring(0, 22),
+    (s.meetingName || '').substring(0, 22),
+    formatDate(s.meetingDate),
+    (formatTimestamp(s.timestamp) || '').substring(0, 10),
+    s.attendanceConfirmed ? 'Yes' : 'No',
+    (s.attachmentName || s.notes || '').substring(0, 35)
+  ]);
+  if (typeof doc.autoTable === 'function') {
+    doc.autoTable({ head: headers, body: rows, startY: 30, styles: { fontSize: 7 } });
+  } else {
+    doc.setFontSize(8);
+    let y = 40;
+    rows.forEach((row, i) => {
+      doc.text(row.join(' | '), 14, y);
+      y += 10;
+    });
+  }
+  doc.save(`governance-submissions-${new Date().toISOString().slice(0, 10)}.pdf`);
+}
+
+/**
+ * Exports submissions as a Word document (.doc).
+ */
+function exportSubmissionsWord() {
+  const submissions = getSubmissions();
+  const rows = submissions.map(s => `
+    <tr>
+      <td>${escapeHtml(s.pid || '')}</td>
+      <td>${escapeHtml(s.committeeName || '')}</td>
+      <td>${escapeHtml(s.meetingName || '')}</td>
+      <td>${formatDate(s.meetingDate)}</td>
+      <td>${formatTimestamp(s.timestamp)}</td>
+      <td>${s.attendanceConfirmed ? 'Yes' : 'No'}</td>
+      <td>${escapeHtml(s.attachmentName || s.notes || '')}</td>
+    </tr>
+  `).join('');
+  const html = `<!DOCTYPE html>
+<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word">
+<head><meta charset="utf-8"><title>Governance Submissions</title></head>
+<body>
+<h1>VT Shared Governance - Submissions</h1>
+<table border="1" cellpadding="4" cellspacing="0" style="border-collapse:collapse;width:100%">
+<thead><tr><th>PID</th><th>Committee</th><th>Meeting</th><th>Date</th><th>Submitted</th><th>Attended</th><th>Notes/Document</th></tr></thead>
+<tbody>${rows}</tbody>
+</table>
+</body>
+</html>`;
+  const blob = new Blob(['\ufeff' + html], { type: 'application/msword' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `governance-submissions-${new Date().toISOString().slice(0, 10)}.doc`;
   a.click();
   URL.revokeObjectURL(url);
 }
