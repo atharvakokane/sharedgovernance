@@ -285,6 +285,45 @@ function exportSubmissionsJSON() {
 }
 
 /**
+ * Exports all submissions as a CSV file download.
+ * Columns: Senator PID, Committee, Meeting, Date, Attended, Meeting Notes
+ */
+function exportSubmissionsCSV() {
+  const submissions = getSubmissions();
+  if (!submissions || !submissions.length) {
+    alert('No submissions to export.');
+    return;
+  }
+
+  // Header row
+  const headers = ['Senator PID', 'Committee', 'Meeting', 'Date', 'Attended', 'Meeting Notes'];
+  
+  // Convert submissions to rows
+  const rows = submissions.map(s => [
+    s.pid || '',
+    s.committeeName || '',
+    s.meetingName || '',
+    s.meetingDate || '',
+    s.attendanceConfirmed ? 'Yes' : 'No',
+    (s.notes || '').replace(/\r?\n/g, ' ') // Remove newlines from notes for CSV compatibility
+  ]);
+
+  // Combine headers and rows, escaping quotes
+  const csvContent = [
+    headers.join(','),
+    ...rows.map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(','))
+  ].join('\n');
+
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `governance-notes-${new Date().toISOString().slice(0, 10)}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+/**
  * Imports submissions from a JSON file and merges with existing.
  * @param {File} file - JSON file from Export
  * @param {Function} onRefresh - Callback to refresh the submissions table
