@@ -37,7 +37,6 @@
             Import
             <input type="file" id="importFile" accept=".json" style="display: none;">
           </label>
-          <button type="button" class="btn btn-danger btn-sm" id="resetDataBtn" title="Clear locally cached data and reload from files">Reset Cached Data</button>
         </div>
       </div>
 
@@ -120,13 +119,6 @@
           importSubmissions(file, function() { renderSubmissionsTable(getSubmissions()); });
           e.target.value = '';
         }
-      });
-
-      // Reset cached data button
-      document.getElementById('resetDataBtn').addEventListener('click', function() {
-        localStorage.removeItem(GOV_STORAGE_KEYS.MEETINGS_OVERRIDE);
-        localStorage.removeItem(GOV_STORAGE_KEYS.ASSIGNMENTS_OVERRIDE);
-        window.location.reload();
       });
 
       // Session check - redirect to login if not authenticated

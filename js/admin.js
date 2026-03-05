@@ -42,7 +42,6 @@ function getCombinedSubmissions(submissions, assignments = [], meetings = []) {
               combined.push({
                 pid: assign.pid,
                 committeeName: meeting.committee,
-                meetingName: meeting.name,
                 meetingDate: meeting.date,
                 meetingId: meeting.id,
                 timestamp: null,
@@ -81,7 +80,6 @@ function renderSubmissionsTable(submissions, assignments = [], meetings = []) {
 
   const filterPid = (document.getElementById('filterPid') || {}).value || '';
   const filterCommittee = (document.getElementById('filterCommittee') || {}).value || '';
-  const filterMeeting = (document.getElementById('filterMeeting') || {}).value || '';
 
   const displaySubmissions = getCombinedSubmissions(submissions, assignments, meetings);
 
@@ -92,15 +90,11 @@ function renderSubmissionsTable(submissions, assignments = [], meetings = []) {
   if (filterCommittee) {
     filtered = filtered.filter(s => String(s.committeeName || '').toLowerCase().includes(filterCommittee.toLowerCase()));
   }
-  if (filterMeeting) {
-    filtered = filtered.filter(s => String(s.meetingName || '').toLowerCase().includes(filterMeeting.toLowerCase()));
-  }
 
   const tableHtml = `
     <div class="filter-bar">
       <input type="text" id="filterPid" placeholder="Filter by PID" value="${escapeHtml(filterPid)}">
       <input type="text" id="filterCommittee" placeholder="Filter by Committee" value="${escapeHtml(filterCommittee)}">
-      <input type="text" id="filterMeeting" placeholder="Filter by Meeting" value="${escapeHtml(filterMeeting)}">
       <button type="button" class="btn btn-secondary btn-sm" id="clearFilters">Clear</button>
     </div>
     <div class="table-responsive">
@@ -109,7 +103,6 @@ function renderSubmissionsTable(submissions, assignments = [], meetings = []) {
           <tr>
             <th>PID</th>
             <th>Committee</th>
-            <th>Meeting</th>
             <th>Date</th>
             <th>Submitted</th>
             <th>Attended</th>
@@ -118,12 +111,11 @@ function renderSubmissionsTable(submissions, assignments = [], meetings = []) {
         </thead>
         <tbody>
           ${filtered.length === 0 
-            ? '<tr><td colspan="7" class="empty-state">No submissions found.</td></tr>'
+            ? '<tr><td colspan="6" class="empty-state">No submissions found.</td></tr>'
             : filtered.map(s => `
               <tr class="${s.isMissing ? 'row-missing' : ''}">
                 <td>${escapeHtml(s.pid)}</td>
                 <td>${escapeHtml(s.committeeName || '')}</td>
-                <td>${escapeHtml(s.meetingName || '')}</td>
                 <td>${formatDate(s.meetingDate)}</td>
                 <td>${s.timestamp ? formatTimestamp(s.timestamp) : '<span style="color: var(--color-danger); font-weight: 600;">Not Submitted</span>'}</td>
                 <td>
@@ -145,7 +137,7 @@ function renderSubmissionsTable(submissions, assignments = [], meetings = []) {
 
   // Debounced filter - 200ms delay prevents blocking on every keystroke
   const debouncedRender = debounce(() => renderSubmissionsTable(getSubmissions(), assignments, meetings), 200);
-  ['filterPid', 'filterCommittee', 'filterMeeting'].forEach(id => {
+  ['filterPid', 'filterCommittee'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.addEventListener('input', debouncedRender);
   });
@@ -154,7 +146,6 @@ function renderSubmissionsTable(submissions, assignments = [], meetings = []) {
     clearBtn.addEventListener('click', () => {
       document.getElementById('filterPid').value = '';
       document.getElementById('filterCommittee').value = '';
-      document.getElementById('filterMeeting').value = '';
       renderSubmissionsTable(getSubmissions(), assignments, meetings);
     });
   }
@@ -262,8 +253,7 @@ function renderMeetingsSection(meetings, allowedCommittees, onMeetingsChange) {
       <table class="data-table">
         <thead>
           <tr>
-            <th>Committee</th>
-            <th>Meeting Name</th>
+            <th>Committee / Commission</th>
             <th>Date</th>
             <th>Time</th>
             <th>Location</th>
@@ -273,8 +263,7 @@ function renderMeetingsSection(meetings, allowedCommittees, onMeetingsChange) {
         <tbody>
           ${meetings.map(m => `
             <tr data-meeting-id="${escapeHtml(m.id)}">
-              <td><input type="text" value="${escapeHtml(m.committee || '')}" data-field="committee" class="inline-edit" list="meetingCommitteeList" placeholder="Select from allowed committees"></td>
-              <td><input type="text" value="${escapeHtml(m.name || '')}" data-field="name" class="inline-edit"></td>
+              <td><input type="text" value="${escapeHtml(m.committee || '')}" data-field="committee" class="inline-edit" list="meetingCommitteeList" placeholder="Select committee"></td>
               <td><input type="date" value="${escapeHtml(m.date || '')}" data-field="date" class="inline-edit"></td>
               <td><input type="text" value="${escapeHtml(m.time || '')}" data-field="time" class="inline-edit" placeholder="e.g. 2:00 PM"></td>
               <td><input type="text" value="${escapeHtml(m.location || '')}" data-field="location" class="inline-edit"></td>
@@ -325,7 +314,6 @@ function renderMeetingsSection(meetings, allowedCommittees, onMeetingsChange) {
     meetings.push({
       id: newId,
       committee,
-      name: 'New Meeting',
       date: new Date().toISOString().slice(0, 10),
       time: '',
       location: ''
@@ -352,7 +340,7 @@ function exportSubmissionsJSON() {
 
 /**
  * Exports all submissions as a CSV file download.
- * Columns: Senator PID, Committee, Meeting, Date, Attended, Meeting Notes
+ * Columns: Senator PID, Committee, Date, Attended, Meeting Notes
  */
 function exportSubmissionsCSV(meetings, assignments) {
   const submissions = getSubmissions();
@@ -364,13 +352,12 @@ function exportSubmissionsCSV(meetings, assignments) {
   }
 
   // Header row
-  const headers = ['Senator PID', 'Committee', 'Meeting', 'Date', 'Attended', 'Meeting Notes'];
+  const headers = ['Senator PID', 'Committee', 'Date', 'Attended', 'Meeting Notes'];
   
   // Convert combined to rows
   const rows = combined.map(s => [
     s.pid || '',
     s.committeeName || '',
-    s.meetingName || '',
     s.meetingDate || '',
     s.attendanceConfirmed ? 'Yes' : 'No',
     (s.notes || '').replace(/\r?\n/g, ' ') // Remove newlines from notes for CSV compatibility
@@ -405,7 +392,7 @@ function importSubmissions(file, onRefresh) {
       const existing = getSubmissions();
       const merged = [...existing];
       imported.forEach(s => {
-        if (s.pid && s.meetingName && s.timestamp) {
+        if (s.pid && s.committeeName && s.timestamp) {
           const duplicate = merged.some(m => 
             m.pid === s.pid && m.meetingId === s.meetingId && m.timestamp === s.timestamp
           );

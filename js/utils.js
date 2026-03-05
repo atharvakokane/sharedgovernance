@@ -175,13 +175,11 @@ function renderMeetingsCalendar(containerId, meetings, options = {}) {
       const dayMeetings = meetingsByDay[dayKey] || [];
       const meetingChips = dayMeetings.map(meeting => {
         const color = committeeColorMap[meeting.committee] || '#6c757d';
-        const committeeLabel = meeting.committee || meeting.name || 'Meeting';
-        const meetingLabel = meeting.name && meeting.name !== committeeLabel ? meeting.name : '';
+        const committeeLabel = meeting.committee || 'Meeting';
         const timeLabel = meeting.time ? meeting.time : 'Time TBD';
         return `
           <div class="calendar-event" style="border-left-color: ${color};">
             <span class="calendar-event-name">${calendarEscapeHtml(committeeLabel)}</span>
-            ${meetingLabel ? `<span class="calendar-event-meeting">${calendarEscapeHtml(meetingLabel)}</span>` : ''}
             <span class="calendar-event-time">${calendarEscapeHtml(timeLabel)}</span>
           </div>
         `;

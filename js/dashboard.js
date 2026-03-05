@@ -40,9 +40,8 @@ function renderDashboard(session, meetings) {
 
   container.innerHTML = meetings.map(meeting => `
     <div class="card meeting-card" data-meeting-id="${meeting.id}">
-      <h3>${escapeHtml(meeting.name)}</h3>
+      <h3>${escapeHtml(meeting.committee)}</h3>
       <div class="meeting-meta">
-        <span><strong>Committee:</strong> ${escapeHtml(meeting.committee)}</span>
         <span><strong>Date:</strong> ${formatDate(meeting.date)}</span>
         <span><strong>Time:</strong> ${escapeHtml(meeting.time || '')}</span>
         ${meeting.location ? `<span><strong>Location:</strong> ${escapeHtml(meeting.location)}</span>` : ''}
@@ -82,7 +81,6 @@ function handleSubmission(session, meeting, attendance, notes, formEl) {
   const submission = {
     pid: session.pid,
     committeeName: meeting.committee,
-    meetingName: meeting.name,
     meetingDate: meeting.date,
     meetingId: meeting.id,
     timestamp: new Date().toISOString(),
