@@ -178,13 +178,16 @@ function renderMeetingsCalendar(containerId, meetings, options = {}) {
         const committeeLabel = meeting.committee || 'Meeting';
         const timeLabel = meeting.time ? meeting.time : 'Time TBD';
         const acronym = getCommitteeAcronym(committeeLabel);
-        const url = acronym ? `https://governance.vt.edu/BodyDetails/${acronym}` : '#';
+        const url = acronym ? `https://governance.vt.edu/BodyDetails/${acronym}` : null;
+        
+        const clickHandler = url ? `onclick="window.open('${url}', '_blank'); event.stopPropagation();"` : '';
+        const pointerStyle = url ? 'cursor: pointer;' : '';
         
         return `
-          <a href="${url}" target="_blank" class="calendar-event" style="border-left-color: ${color}; text-decoration: none; display: block;" title="View ${calendarEscapeHtml(committeeLabel)} details on governance.vt.edu">
+          <div class="calendar-event" style="border-left-color: ${color}; ${pointerStyle}" ${clickHandler} title="${url ? `View ${calendarEscapeHtml(committeeLabel)} details on governance.vt.edu` : ''}">
             <span class="calendar-event-name">${calendarEscapeHtml(committeeLabel)}</span>
             <span class="calendar-event-time">${calendarEscapeHtml(timeLabel)}</span>
-          </a>
+          </div>
         `;
       }).join('');
 
@@ -299,27 +302,35 @@ function calendarEscapeHtml(text) {
  */
 function getCommitteeAcronym(committeeName) {
   if (!committeeName) return null;
+  
+  // Normalize: trim, lowercase, and handle "on" vs "of"
   const name = committeeName.trim();
+  const normalized = name.toLowerCase()
+    .replace(/\s+/g, ' ')
+    .replace(' commission of ', ' commission on ')
+    .replace(' committee of ', ' committee on ');
+
   const map = {
-    'Athletics Committee': 'AC',
-    'Campus Development Committee': 'CDC',
-    'University Curriculum Committee for General Education': 'UCCGE',
-    'Climate Action, Sustainability, and Energy Committee': 'CASE',
-    'Intellectual Property Committee': 'IPC',
-    'Budgeting and Planning Committee': 'BPC',
-    'Transportation and Parking Committee': 'TPC',
-    'Commission on Administrative and Professional Faculty Affairs': 'CAPFA',
-    'Commission on Faculty Affairs': 'CFA',
-    'Commission on Undergraduate Studies and Policies': 'CUSP',
-    'Commission on Research': 'COR',
-    'Commission on Outreach and International Affairs': 'COIA',
-    'Commission on Graduate and Professional Student Affairs': 'CGPSA',
-    'Library Committee': 'LC',
-    'Commission on Staff Policies and Affairs': 'CSPA',
-    'Commission on Graduate and Professional Studies and Policies': 'CGPSP',
-    'Commission on Undergraduate Student Affairs': 'CUSA'
+    'athletics committee': 'AC',
+    'campus development committee': 'CDC',
+    'university curriculum committee for general education': 'UCCGE',
+    'climate action, sustainability, and energy committee': 'CASE',
+    'intellectual property committee': 'IPC',
+    'budgeting and planning committee': 'BPC',
+    'transportation and parking committee': 'TPC',
+    'commission on administrative and professional faculty affairs': 'CAPFA',
+    'commission on faculty affairs': 'CFA',
+    'commission on undergraduate studies and policies': 'CUSP',
+    'commission on research': 'COR',
+    'commission on outreach and international affairs': 'COIA',
+    'commission on graduate and professional student affairs': 'CGPSA',
+    'library committee': 'LC',
+    'commission on staff policies and affairs': 'CSPA',
+    'commission on graduate and professional studies and policies': 'CGPSP',
+    'commission on undergraduate student affairs': 'CUSA'
   };
-  return map[name] || null;
+  
+  return map[normalized] || null;
 }
 
 /**
