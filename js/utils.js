@@ -126,6 +126,17 @@ function renderMeetingsCalendar(containerId, meetings, options = {}) {
   const container = document.getElementById(containerId);
   if (!container) return;
 
+  // Add click listener for redirection (only once)
+  if (!container.dataset.listenerAttached) {
+    container.addEventListener('click', (e) => {
+      const eventEl = e.target.closest('.calendar-event');
+      if (eventEl && eventEl.dataset.redirectUrl) {
+        window.open(eventEl.dataset.redirectUrl, '_blank');
+      }
+    });
+    container.dataset.listenerAttached = 'true';
+  }
+
   const safeMeetings = Array.isArray(meetings) ? meetings.slice() : [];
   const datedMeetings = safeMeetings
     .filter(m => m && m.date)
@@ -178,13 +189,13 @@ function renderMeetingsCalendar(containerId, meetings, options = {}) {
         const committeeLabel = meeting.committee || 'Meeting';
         const timeLabel = meeting.time ? meeting.time : 'Time TBD';
         const acronym = getCommitteeAcronym(committeeLabel);
-        const url = acronym ? `https://governance.vt.edu/BodyDetails/${acronym}` : null;
-        
-        const clickHandler = url ? `onclick="window.open('${url}', '_blank'); event.stopPropagation();"` : '';
-        const pointerStyle = url ? 'cursor: pointer;' : '';
+        const url = acronym ? `https://governance.vt.edu/BodyDetails/${acronym}` : '';
         
         return `
-          <div class="calendar-event" style="border-left-color: ${color}; ${pointerStyle}" ${clickHandler} title="${url ? `View ${calendarEscapeHtml(committeeLabel)} details on governance.vt.edu` : ''}">
+          <div class="calendar-event" 
+               style="border-left-color: ${color}; cursor: ${url ? 'pointer' : 'default'};" 
+               data-redirect-url="${url}"
+               title="${url ? `View ${calendarEscapeHtml(committeeLabel)} details on governance.vt.edu` : ''}">
             <span class="calendar-event-name">${calendarEscapeHtml(committeeLabel)}</span>
             <span class="calendar-event-time">${calendarEscapeHtml(timeLabel)}</span>
           </div>
@@ -303,7 +314,7 @@ function calendarEscapeHtml(text) {
 function getCommitteeAcronym(committeeName) {
   if (!committeeName) return null;
   
-  // Normalize: trim, lowercase, and handle "on" vs "of"
+  // Normalize: trim, lowercase, handle "on" vs "of", and remove multiple spaces
   const name = committeeName.trim();
   const normalized = name.toLowerCase()
     .replace(/\s+/g, ' ')
@@ -330,7 +341,17 @@ function getCommitteeAcronym(committeeName) {
     'commission on undergraduate student affairs': 'CUSA'
   };
   
-  return map[normalized] || null;
+  if (map[normalized]) return map[normalized];
+
+  // Secondary match: Try matching just the keywords if the full name has extra words
+  const keys = Object.keys(map);
+  for (const key of keys) {
+    if (normalized.includes(key) || key.includes(normalized)) {
+      return map[key];
+    }
+  }
+
+  return null;
 }
 
 /**

@@ -635,6 +635,10 @@ body {
   border-color: #cbd5e1;
 }
 
+.calendar-event span {
+  pointer-events: none; /* Let clicks pass through to the parent container */
+}
+
 .calendar-event-name {
   display: block;
   color: var(--color-text);
