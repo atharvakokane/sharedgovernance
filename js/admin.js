@@ -13,11 +13,69 @@ function debounce(fn, ms) {
 }
 
 /**
+ * Combines actual submissions with missing ones (senators assigned to meetings that passed without submission).
+ * @param {Array} submissions - Actual submissions from localStorage
+ * @param {Array} assignments - Senator assignments
+ * @param {Array} meetings - All meetings
+ * @returns {Array} Combined list
+ */
+function getCombinedSubmissions(submissions, assignments = [], meetings = []) {
+  let combined = [...submissions];
+  
+  if (assignments.length && meetings.length) {
+    const today = new Date().toISOString().split('T')[0];
+    
+    assignments.forEach(assign => {
+      const senatorCommittees = assign.committees || [];
+      senatorCommittees.forEach(committeeName => {
+        const committeeMeetings = meetings.filter(m => m.committee === committeeName);
+        committeeMeetings.forEach(meeting => {
+          // If meeting date has passed
+          if (meeting.date < today) {
+            // Check if this senator has a submission for this meeting
+            const hasSubmission = submissions.some(s => 
+              String(s.pid) === String(assign.pid) && 
+              String(s.meetingId) === String(meeting.id)
+            );
+            
+            if (!hasSubmission) {
+              combined.push({
+                pid: assign.pid,
+                committeeName: meeting.committee,
+                meetingName: meeting.name,
+                meetingDate: meeting.date,
+                meetingId: meeting.id,
+                timestamp: null,
+                attendanceConfirmed: false,
+                notes: 'MISSING: No submission provided.',
+                isMissing: true
+              });
+            }
+          }
+        });
+      });
+    });
+  }
+
+  // Sort: most recent first
+  combined.sort((a, b) => {
+    const dateA = a.meetingDate || '';
+    const dateB = b.meetingDate || '';
+    if (dateA !== dateB) return dateB.localeCompare(dateA);
+    return (b.timestamp || '').localeCompare(a.timestamp || '');
+  });
+
+  return combined;
+}
+
+/**
  * Renders the submissions table with filter controls.
  * Uses debounced filtering for responsive performance.
  * @param {Array} submissions - All submissions
+ * @param {Array} assignments - Optional: Senator assignments to calculate missing submissions
+ * @param {Array} meetings - Optional: All meetings to calculate missing submissions
  */
-function renderSubmissionsTable(submissions) {
+function renderSubmissionsTable(submissions, assignments = [], meetings = []) {
   const container = document.getElementById('submissionsSection');
   if (!container) return;
 
@@ -25,7 +83,9 @@ function renderSubmissionsTable(submissions) {
   const filterCommittee = (document.getElementById('filterCommittee') || {}).value || '';
   const filterMeeting = (document.getElementById('filterMeeting') || {}).value || '';
 
-  let filtered = submissions;
+  const displaySubmissions = getCombinedSubmissions(submissions, assignments, meetings);
+
+  let filtered = displaySubmissions;
   if (filterPid) {
     filtered = filtered.filter(s => String(s.pid).toLowerCase().includes(filterPid.toLowerCase()));
   }
@@ -60,14 +120,20 @@ function renderSubmissionsTable(submissions) {
           ${filtered.length === 0 
             ? '<tr><td colspan="7" class="empty-state">No submissions found.</td></tr>'
             : filtered.map(s => `
-              <tr>
+              <tr class="${s.isMissing ? 'row-missing' : ''}">
                 <td>${escapeHtml(s.pid)}</td>
                 <td>${escapeHtml(s.committeeName || '')}</td>
                 <td>${escapeHtml(s.meetingName || '')}</td>
                 <td>${formatDate(s.meetingDate)}</td>
-                <td>${formatTimestamp(s.timestamp)}</td>
-                <td>${s.attendanceConfirmed ? 'Yes' : 'No'}</td>
-                <td>${escapeHtml((s.notes || '').substring(0, 80))}${(s.notes || '').length > 80 ? '...' : ''}</td>
+                <td>${s.timestamp ? formatTimestamp(s.timestamp) : '<span style="color: var(--color-danger); font-weight: 600;">Not Submitted</span>'}</td>
+                <td>
+                  <span style="color: ${s.attendanceConfirmed ? 'var(--color-success)' : 'var(--color-danger)'}; font-weight: 600;">
+                    ${s.attendanceConfirmed ? 'Yes' : 'No'}
+                  </span>
+                </td>
+                <td style="${s.isMissing ? 'font-style: italic; color: var(--color-text-muted);' : ''}">
+                  ${escapeHtml((s.notes || '').substring(0, 80))}${(s.notes || '').length > 80 ? '...' : ''}
+                </td>
               </tr>
             `).join('')}
         </tbody>
@@ -78,7 +144,7 @@ function renderSubmissionsTable(submissions) {
   container.innerHTML = tableHtml;
 
   // Debounced filter - 200ms delay prevents blocking on every keystroke
-  const debouncedRender = debounce(() => renderSubmissionsTable(getSubmissions()), 200);
+  const debouncedRender = debounce(() => renderSubmissionsTable(getSubmissions(), assignments, meetings), 200);
   ['filterPid', 'filterCommittee', 'filterMeeting'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.addEventListener('input', debouncedRender);
@@ -89,7 +155,7 @@ function renderSubmissionsTable(submissions) {
       document.getElementById('filterPid').value = '';
       document.getElementById('filterCommittee').value = '';
       document.getElementById('filterMeeting').value = '';
-      renderSubmissionsTable(getSubmissions());
+      renderSubmissionsTable(getSubmissions(), assignments, meetings);
     });
   }
 
@@ -288,9 +354,11 @@ function exportSubmissionsJSON() {
  * Exports all submissions as a CSV file download.
  * Columns: Senator PID, Committee, Meeting, Date, Attended, Meeting Notes
  */
-function exportSubmissionsCSV() {
+function exportSubmissionsCSV(meetings, assignments) {
   const submissions = getSubmissions();
-  if (!submissions || !submissions.length) {
+  const combined = getCombinedSubmissions(submissions, assignments, meetings);
+  
+  if (!combined || !combined.length) {
     alert('No submissions to export.');
     return;
   }
@@ -298,8 +366,8 @@ function exportSubmissionsCSV() {
   // Header row
   const headers = ['Senator PID', 'Committee', 'Meeting', 'Date', 'Attended', 'Meeting Notes'];
   
-  // Convert submissions to rows
-  const rows = submissions.map(s => [
+  // Convert combined to rows
+  const rows = combined.map(s => [
     s.pid || '',
     s.committeeName || '',
     s.meetingName || '',

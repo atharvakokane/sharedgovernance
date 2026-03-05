@@ -423,6 +423,14 @@ body {
   background: #f8fafc;
 }
 
+.row-missing {
+  background-color: #fff1f2;
+}
+
+.row-missing:hover {
+  background-color: #ffe4e6 !important;
+}
+
 /* ===== Alerts / Messages ===== */
 .alert {
   padding: 1rem 1.25rem;

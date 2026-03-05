@@ -95,7 +95,19 @@
       });
 
       // Export buttons
-      document.getElementById('exportCsvBtn').addEventListener('click', exportSubmissionsCSV);
+      document.getElementById('exportCsvBtn').addEventListener('click', function() {
+        // We need the latest meetings and assignments for the CSV export to include missing ones
+        Promise.all([
+          fetchData('meetings.json'),
+          fetchData('assignments.json')
+        ]).then(function(results) {
+          var meetings = getMeetingsWithOverride(results[0]);
+          var assignments = getAssignmentsWithOverride(results[1]);
+          exportSubmissionsCSV(meetings, assignments);
+        }).catch(function() {
+          exportSubmissionsCSV(); // Fallback if fetch fails
+        });
+      });
       document.getElementById('exportJsonBtn').addEventListener('click', exportSubmissionsJSON);
 
       // Import button
@@ -118,8 +130,13 @@
       var session = requireAuth('admin');
       if (!session) return;
 
-      // Render submissions immediately (from localStorage, no fetch needed)
-      renderSubmissionsTable(getSubmissions());
+      // Render submissions table
+      function refreshSubmissions(meetings, assignments) {
+        renderSubmissionsTable(getSubmissions(), assignments || [], meetings || []);
+      }
+
+      // Initial render (empty assignments/meetings until loaded)
+      refreshSubmissions();
 
       // Load assignments and meetings data
       Promise.all([
@@ -130,6 +147,9 @@
         var meetings = getMeetingsWithOverride(results[0]);
         var assignments = getAssignmentsWithOverride(results[1]);
         var allowedCommittees = Array.isArray(results[2]) ? results[2] : [];
+
+        // Update submissions table with loaded assignments and meetings for missing check
+        refreshSubmissions(meetings, assignments);
 
         try {
           renderAssignmentsSection(assignments, meetings, allowedCommittees);
@@ -145,6 +165,8 @@
             renderMeetingsCalendar('adminCalendarSection', updatedMeetings, {
               emptyMessage: 'No meetings scheduled.'
             });
+            // Also refresh submissions when meetings are edited
+            refreshSubmissions(updatedMeetings, assignments);
           });
         } catch (e) {
           console.error('Meetings render error:', e);
