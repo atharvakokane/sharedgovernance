@@ -177,11 +177,14 @@ function renderMeetingsCalendar(containerId, meetings, options = {}) {
         const color = committeeColorMap[meeting.committee] || '#6c757d';
         const committeeLabel = meeting.committee || 'Meeting';
         const timeLabel = meeting.time ? meeting.time : 'Time TBD';
+        const acronym = getCommitteeAcronym(committeeLabel);
+        const url = acronym ? `https://governance.vt.edu/BodyDetails/${acronym}` : '#';
+        
         return `
-          <div class="calendar-event" style="border-left-color: ${color};">
+          <a href="${url}" target="_blank" class="calendar-event" style="border-left-color: ${color}; text-decoration: none; display: block;" title="View ${calendarEscapeHtml(committeeLabel)} details on governance.vt.edu">
             <span class="calendar-event-name">${calendarEscapeHtml(committeeLabel)}</span>
             <span class="calendar-event-time">${calendarEscapeHtml(timeLabel)}</span>
-          </div>
+          </a>
         `;
       }).join('');
 
@@ -287,6 +290,36 @@ function calendarEscapeHtml(text) {
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;');
+}
+
+/**
+ * Maps a committee name to its governance.vt.edu acronym.
+ * @param {string} committeeName - The full name of the committee
+ * @returns {string|null} The acronym or null if no mapping exists
+ */
+function getCommitteeAcronym(committeeName) {
+  if (!committeeName) return null;
+  const name = committeeName.trim();
+  const map = {
+    'Athletics Committee': 'AC',
+    'Campus Development Committee': 'CDC',
+    'University Curriculum Committee for General Education': 'UCCGE',
+    'Climate Action, Sustainability, and Energy Committee': 'CASE',
+    'Intellectual Property Committee': 'IPC',
+    'Budgeting and Planning Committee': 'BPC',
+    'Transportation and Parking Committee': 'TPC',
+    'Commission on Administrative and Professional Faculty Affairs': 'CAPFA',
+    'Commission on Faculty Affairs': 'CFA',
+    'Commission on Undergraduate Studies and Policies': 'CUSP',
+    'Commission on Research': 'COR',
+    'Commission on Outreach and International Affairs': 'COIA',
+    'Commission on Graduate and Professional Student Affairs': 'CGPSA',
+    'Library Committee': 'LC',
+    'Commission on Staff Policies and Affairs': 'CSPA',
+    'Commission on Graduate and Professional Studies and Policies': 'CGPSP',
+    'Commission on Undergraduate Student Affairs': 'CUSA'
+  };
+  return map[name] || null;
 }
 
 /**
