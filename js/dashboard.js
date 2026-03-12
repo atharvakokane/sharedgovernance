@@ -85,14 +85,14 @@ function renderDashboard(session, meetings) {
           <span><strong>Time:</strong> ${escapeHtml(meeting.time || '')}</span>
           ${meeting.location ? `<span><strong>Location:</strong> ${escapeHtml(meeting.location)}</span>` : ''}
         </div>
-        <form class="meeting-submission-form" data-meeting-id="${meeting.id}">
-          <div class="form-group">
-            <label>
-              <input type="checkbox" name="attendance" value="confirmed">
-              I attended this meeting
-            </label>
-          </div>
-          <div class="form-group">
+      <form class="meeting-submission-form" data-meeting-id="${meeting.id}">
+        <div class="form-group" style="margin-bottom: 1rem;">
+          <label class="attendance-label">
+            <input type="checkbox" name="attendance" value="confirmed">
+            I attended this meeting
+          </label>
+        </div>
+        <div class="form-group">
             <label for="notes-${meeting.id}">Meeting Notes</label>
             <textarea id="notes-${meeting.id}" name="notes" placeholder="Enter your meeting notes here..."></textarea>
           </div>
@@ -103,6 +103,17 @@ function renderDashboard(session, meetings) {
   }).join('');
 
   container.querySelectorAll('.meeting-submission-form').forEach(form => {
+    // Add change listener to the attendance checkbox for styling
+    const checkbox = form.querySelector('[name="attendance"]');
+    const label = checkbox.closest('.attendance-label');
+    checkbox.addEventListener('change', function() {
+      if (this.checked) {
+        label.classList.add('checked');
+      } else {
+        label.classList.remove('checked');
+      }
+    });
+
     form.addEventListener('submit', function(e) {
       e.preventDefault();
       const meetingId = this.dataset.meetingId;
@@ -141,6 +152,10 @@ function handleSubmission(session, meeting, attendance, notes, formEl) {
   formEl.insertBefore(alertEl, formEl.firstChild);
 
   formEl.reset();
+  // Remove 'checked' class from attendance label after reset
+  const attendanceLabel = formEl.querySelector('.attendance-label');
+  if (attendanceLabel) attendanceLabel.classList.remove('checked');
+
   setTimeout(function() { alertEl.remove(); }, 5000);
 }
 

@@ -416,6 +416,50 @@ body {
   border: 1px solid #fee2e2;
 }
 
+/* Attendance Toggle Checkbox Styling */
+.attendance-label {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  background: #f8fafc;
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius);
+  cursor: pointer;
+  font-weight: 700;
+  font-size: 0.9375rem;
+  color: var(--color-text-muted);
+  transition: all var(--transition-fast);
+  user-select: none;
+  width: 100%;
+}
+
+.attendance-label:hover {
+  background: white;
+  border-color: var(--color-primary-light);
+  color: var(--color-primary);
+}
+
+.attendance-label input[type="checkbox"] {
+  width: 1.25rem;
+  height: 1.25rem;
+  margin: 0;
+  accent-color: var(--color-primary);
+  cursor: pointer;
+}
+
+.attendance-label.checked {
+  background: #ecfdf5;
+  border-color: var(--color-success);
+  color: #065f46;
+  box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.1);
+}
+
+.attendance-label.checked input[type="checkbox"] {
+  accent-color: var(--color-success);
+}
+
 .meeting-card h3 {
   margin: 0 0 0.5rem 0;
   font-size: 1rem;
