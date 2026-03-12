@@ -372,6 +372,12 @@ body {
 }
 
 /* ===== Dashboard - Meeting Cards ===== */
+#meetingsContainer {
+  max-height: 600px;
+  overflow-y: auto;
+  padding-right: 0.5rem; /* Space for scrollbar */
+}
+
 .meeting-card {
   border-left: 4px solid var(--color-primary);
 }
