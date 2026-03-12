@@ -33,40 +33,80 @@ function renderDashboard(session, meetings) {
   const container = document.getElementById('meetingsContainer');
   if (!container) return;
 
-  if (meetings.length === 0) {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  // Filter out meetings that are more than 5 days old
+  const activeMeetings = meetings.filter(meeting => {
+    const meetingDate = new Date(meeting.date + 'T12:00:00');
+    meetingDate.setHours(0, 0, 0, 0);
+    const diffTime = meetingDate - today;
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays >= -5;
+  });
+
+  if (activeMeetings.length === 0) {
     container.innerHTML = '<div class="empty-state">No meetings scheduled for your committees at this time.</div>';
     return;
   }
 
-  container.innerHTML = meetings.map(meeting => `
-    <div class="card meeting-card" data-meeting-id="${meeting.id}">
-      <h3>${escapeHtml(meeting.committee)}</h3>
-      <div class="meeting-meta">
-        <span><strong>Date:</strong> ${formatDate(meeting.date)}</span>
-        <span><strong>Time:</strong> ${escapeHtml(meeting.time || '')}</span>
-        ${meeting.location ? `<span><strong>Location:</strong> ${escapeHtml(meeting.location)}</span>` : ''}
+  container.innerHTML = activeMeetings.map(meeting => {
+    const meetingDate = new Date(meeting.date + 'T12:00:00');
+    meetingDate.setHours(0, 0, 0, 0);
+    const diffTime = meetingDate - today;
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    
+    let countdownText = '';
+    let countdownClass = '';
+    
+    if (diffDays === 0) {
+      countdownText = 'Today';
+      countdownClass = 'countdown-today';
+    } else if (diffDays === 1) {
+      countdownText = 'Tomorrow';
+      countdownClass = 'countdown-soon';
+    } else if (diffDays > 1) {
+      countdownText = `${diffDays} days left`;
+      countdownClass = 'countdown-future';
+    } else if (diffDays < 0) {
+      const pastDays = Math.abs(diffDays);
+      countdownText = `${pastDays} day${pastDays > 1 ? 's' : ''} overdue`;
+      countdownClass = 'countdown-overdue';
+    }
+
+    return `
+      <div class="card meeting-card" data-meeting-id="${meeting.id}">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.5rem;">
+          <h3 style="margin: 0;">${escapeHtml(meeting.committee)}</h3>
+          <span class="countdown-badge ${countdownClass}">${countdownText}</span>
+        </div>
+        <div class="meeting-meta">
+          <span><strong>Date:</strong> ${formatDate(meeting.date)}</span>
+          <span><strong>Time:</strong> ${escapeHtml(meeting.time || '')}</span>
+          ${meeting.location ? `<span><strong>Location:</strong> ${escapeHtml(meeting.location)}</span>` : ''}
+        </div>
+        <form class="meeting-submission-form" data-meeting-id="${meeting.id}">
+          <div class="form-group">
+            <label>
+              <input type="checkbox" name="attendance" value="confirmed">
+              I attended this meeting
+            </label>
+          </div>
+          <div class="form-group">
+            <label for="notes-${meeting.id}">Meeting Notes</label>
+            <textarea id="notes-${meeting.id}" name="notes" placeholder="Enter your meeting notes here..."></textarea>
+          </div>
+          <button type="submit" class="btn btn-primary btn-sm">Submit</button>
+        </form>
       </div>
-      <form class="meeting-submission-form" data-meeting-id="${meeting.id}">
-        <div class="form-group">
-          <label>
-            <input type="checkbox" name="attendance" value="confirmed">
-            I attended this meeting
-          </label>
-        </div>
-        <div class="form-group">
-          <label for="notes-${meeting.id}">Meeting Notes</label>
-          <textarea id="notes-${meeting.id}" name="notes" placeholder="Enter your meeting notes here..."></textarea>
-        </div>
-        <button type="submit" class="btn btn-primary btn-sm">Submit</button>
-      </form>
-    </div>
-  `).join('');
+    `;
+  }).join('');
 
   container.querySelectorAll('.meeting-submission-form').forEach(form => {
     form.addEventListener('submit', function(e) {
       e.preventDefault();
       const meetingId = this.dataset.meetingId;
-      const meeting = meetings.find(m => m.id === meetingId);
+      const meeting = activeMeetings.find(m => m.id === meetingId);
       const attendance = this.querySelector('[name="attendance"]').checked;
       const notes = this.querySelector('[name="notes"]').value.trim();
       handleSubmission(session, meeting, attendance, notes, this);

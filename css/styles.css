@@ -382,6 +382,40 @@ body {
   border-left: 4px solid var(--color-primary);
 }
 
+.countdown-badge {
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 0.25rem 0.625rem;
+  border-radius: 2rem;
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+  white-space: nowrap;
+}
+
+.countdown-today {
+  background: #ecfdf5;
+  color: #065f46;
+  border: 1px solid #a7f3d0;
+}
+
+.countdown-soon {
+  background: #fff7ed;
+  color: #9a3412;
+  border: 1px solid #ffedd5;
+}
+
+.countdown-future {
+  background: #f1f5f9;
+  color: #475569;
+  border: 1px solid #e2e8f0;
+}
+
+.countdown-overdue {
+  background: #fef2f2;
+  color: #991b1b;
+  border: 1px solid #fee2e2;
+}
+
 .meeting-card h3 {
   margin: 0 0 0.5rem 0;
   font-size: 1rem;
