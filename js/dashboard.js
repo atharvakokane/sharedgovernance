@@ -38,10 +38,12 @@ function renderDashboard(session, meetings) {
 
   // Filter out meetings that are more than 5 days old
   const activeMeetings = meetings.filter(meeting => {
-    const meetingDate = new Date(meeting.date + 'T12:00:00');
+    const [year, month, day] = meeting.date.split('-').map(Number);
+    const meetingDate = new Date(year, month - 1, day);
     meetingDate.setHours(0, 0, 0, 0);
-    const diffTime = meetingDate - today;
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    
+    const diffTime = meetingDate.getTime() - today.getTime();
+    const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
     return diffDays >= -5;
   });
 
@@ -51,10 +53,12 @@ function renderDashboard(session, meetings) {
   }
 
   container.innerHTML = activeMeetings.map(meeting => {
-    const meetingDate = new Date(meeting.date + 'T12:00:00');
+    const [year, month, day] = meeting.date.split('-').map(Number);
+    const meetingDate = new Date(year, month - 1, day);
     meetingDate.setHours(0, 0, 0, 0);
-    const diffTime = meetingDate - today;
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    
+    const diffTime = meetingDate.getTime() - today.getTime();
+    const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
     
     let countdownText = '';
     let countdownClass = '';
