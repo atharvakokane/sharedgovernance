@@ -46,5 +46,229 @@
     "date": "2026-03-19",
     "time": "3:30 PM - 5:00 PM",
     "location": "Zoom"
+  },
+  {
+    "id": "m7",
+    "committee": "Commission on Administrative and Professional Faculty Affairs",
+    "name": "CAPFA Meeting",
+    "date": "2026-03-13",
+    "time": "11:00 AM - 12:00 PM",
+    "location": "Zoom"
+  },
+  {
+    "id": "m8",
+    "committee": "Commission on Graduate and Professional Studies and Policies",
+    "name": "CGPS&P Meeting",
+    "date": "2026-03-18",
+    "time": "3:30 PM - 5:00 PM",
+    "location": ""
+  },
+  {
+    "id": "m9",
+    "committee": "Commission on Outreach and International Affairs",
+    "name": "COIA Monthly Meeting",
+    "date": "2026-03-19",
+    "time": "3:30 PM - 4:30 PM",
+    "location": "120 Gateway Center/Zoom"
+  },
+  {
+    "id": "m10",
+    "committee": "Climate Action, Sustainability, and Energy Committee",
+    "name": "CASE Committee Meeting",
+    "date": "2026-03-23",
+    "time": "2:00 PM - 3:30 PM",
+    "location": "Newman Library 101S/Zoom"
+  },
+  {
+    "id": "m11",
+    "committee": "Commission on Undergraduate Studies and Policies",
+    "name": "CUSP Meeting",
+    "date": "2026-03-23",
+    "time": "3:00 PM - 5:00 PM",
+    "location": ""
+  },
+  {
+    "id": "m12",
+    "committee": "Commission on Graduate and Professional Student Affairs",
+    "name": "CGPSA Meeting",
+    "date": "2026-03-25",
+    "time": "3:30 PM - 5:00 PM",
+    "location": ""
+  },
+  {
+    "id": "m13",
+    "committee": "Commission on Faculty Affairs",
+    "name": "CFA Meeting",
+    "date": "2026-03-27",
+    "time": "10:30 AM - 12:00 PM",
+    "location": "TBD"
+  },
+  {
+    "id": "m14",
+    "committee": "University Curriculum Committee for General Education",
+    "name": "UCCGE Meeting",
+    "date": "2026-04-01",
+    "time": "2:30 PM - 4:00 PM",
+    "location": "Zoom"
+  },
+  {
+    "id": "m15",
+    "committee": "Commission on Graduate and Professional Studies and Policies",
+    "name": "CGPS&P Meeting",
+    "date": "2026-04-01",
+    "time": "3:30 PM - 5:00 PM",
+    "location": ""
+  },
+  {
+    "id": "m16",
+    "committee": "Commission on Staff Policies and Affairs",
+    "name": "CSPA Meeting",
+    "date": "2026-04-02",
+    "time": "1:00 PM - 2:00 PM",
+    "location": "Zoom"
+  },
+  {
+    "id": "m17",
+    "committee": "Budgeting and Planning Committee",
+    "name": "Budgeting and Planning Committee Meeting",
+    "date": "2026-04-06",
+    "time": "2:00 PM - 3:00 PM",
+    "location": "Burruss Hall 130 & Zoom"
+  },
+  {
+    "id": "m18",
+    "committee": "Campus Development Committee",
+    "name": "Campus Development Committee Meeting",
+    "date": "2026-04-07",
+    "time": "1:30 PM - 2:30 PM",
+    "location": "TBD"
+  },
+  {
+    "id": "m19",
+    "committee": "Commission on Graduate and Professional Student Affairs",
+    "name": "CGPSA Meeting",
+    "date": "2026-04-08",
+    "time": "3:30 PM - 5:00 PM",
+    "location": ""
+  },
+  {
+    "id": "m20",
+    "committee": "Commission on Research",
+    "name": "COR Meeting",
+    "date": "2026-04-09",
+    "time": "3:30 PM - 5:00 PM",
+    "location": "Zoom"
+  },
+  {
+    "id": "m21",
+    "committee": "Commission on Faculty Affairs",
+    "name": "CFA Meeting",
+    "date": "2026-04-10",
+    "time": "10:30 AM - 12:00 PM",
+    "location": "TBD"
+  },
+  {
+    "id": "m22",
+    "committee": "Commission on Administrative and Professional Faculty Affairs",
+    "name": "CAPFA Meeting",
+    "date": "2026-04-10",
+    "time": "11:00 AM - 12:00 PM",
+    "location": "Zoom"
+  },
+  {
+    "id": "m23",
+    "committee": "Commission on Undergraduate Studies and Policies",
+    "name": "CUSP Meeting",
+    "date": "2026-04-13",
+    "time": "3:00 PM - 5:00 PM",
+    "location": ""
+  },
+  {
+    "id": "m24",
+    "committee": "Commission on Graduate and Professional Studies and Policies",
+    "name": "CGPS&P Meeting",
+    "date": "2026-04-15",
+    "time": "3:30 PM - 5:00 PM",
+    "location": ""
+  },
+  {
+    "id": "m25",
+    "committee": "Commission on Outreach and International Affairs",
+    "name": "COIA Monthly Meeting",
+    "date": "2026-04-16",
+    "time": "3:30 PM - 4:30 PM",
+    "location": "120 Gateway Center/Zoom"
+  },
+  {
+    "id": "m26",
+    "committee": "Commission on Faculty Affairs",
+    "name": "CFA Meeting",
+    "date": "2026-04-24",
+    "time": "10:30 AM - 12:00 PM",
+    "location": "TBD"
+  },
+  {
+    "id": "m27",
+    "committee": "Climate Action, Sustainability, and Energy Committee",
+    "name": "CASE Committee Meeting",
+    "date": "2026-04-27",
+    "time": "2:00 PM - 3:30 PM",
+    "location": "Newman Library 101S/Zoom"
+  },
+  {
+    "id": "m28",
+    "committee": "Commission on Undergraduate Studies and Policies",
+    "name": "CUSP Meeting",
+    "date": "2026-04-27",
+    "time": "3:00 PM - 5:00 PM",
+    "location": ""
+  },
+  {
+    "id": "m29",
+    "committee": "Commission on Graduate and Professional Studies and Policies",
+    "name": "CGPS&P Meeting",
+    "date": "2026-05-06",
+    "time": "3:30 PM - 5:00 PM",
+    "location": ""
+  },
+  {
+    "id": "m30",
+    "committee": "Commission on Staff Policies and Affairs",
+    "name": "CSPA Meeting",
+    "date": "2026-05-07",
+    "time": "1:00 PM - 2:00 PM",
+    "location": "Zoom"
+  },
+  {
+    "id": "m31",
+    "committee": "Commission on Research",
+    "name": "COR Meeting",
+    "date": "2026-05-07",
+    "time": "3:30 PM - 5:00 PM",
+    "location": "Zoom"
+  },
+  {
+    "id": "m32",
+    "committee": "Commission on Outreach and International Affairs",
+    "name": "COIA Monthly Meeting",
+    "date": "2026-05-07",
+    "time": "3:30 PM - 4:30 PM",
+    "location": "120 Gateway Center/Zoom"
+  },
+  {
+    "id": "m33",
+    "committee": "Commission on Administrative and Professional Faculty Affairs",
+    "name": "CAPFA Meeting",
+    "date": "2026-05-08",
+    "time": "11:00 AM - 12:00 PM",
+    "location": "Zoom"
+  },
+  {
+    "id": "m34",
+    "committee": "Commission on Graduate and Professional Student Affairs",
+    "name": "CGPSA Meeting",
+    "date": "2026-05-13",
+    "time": "3:30 PM - 5:00 PM",
+    "location": ""
   }
 ]
