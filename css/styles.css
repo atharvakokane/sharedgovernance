@@ -393,9 +393,9 @@ body {
 }
 
 .countdown-today {
-  background: #ecfdf5;
-  color: #065f46;
-  border: 1px solid #a7f3d0;
+  background: var(--color-success);
+  color: white;
+  border: none;
 }
 
 .countdown-soon {
@@ -411,9 +411,9 @@ body {
 }
 
 .countdown-overdue {
-  background: #fef2f2;
-  color: #991b1b;
-  border: 1px solid #fee2e2;
+  background: var(--color-danger);
+  color: white;
+  border: none;
 }
 
 /* Attendance Toggle Checkbox Styling */
