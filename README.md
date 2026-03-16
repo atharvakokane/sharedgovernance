@@ -154,5 +154,5 @@ const FIREBASE_CONFIG = {
 
 **Data not syncing across devices?** Check that (1) Firestore rules allow read/write on `submissions`, and (2) the Admin page shows "(Firestore – syncs across devices)" under Submissions. If it shows "(localStorage – this device only)", the config or rules may be wrong.
 
-**Note**: For production, add proper authentication and restrict rules. The free Firestore tier is sufficient for typical usage.
+**Note**: For production, add proper authentication and restrict rules. The free Firestore tier is sufficient for typical usage. 
 
