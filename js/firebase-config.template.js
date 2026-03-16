@@ -1,11 +1,10 @@
 /**
  * Firebase configuration for shared submissions storage.
- * Create a project at https://console.firebase.google.com/
- * Enable Firestore Database, then paste your config below.
- * Leave as null to use localStorage (submissions stay on each device).
+ * The apiKey is injected at deploy time from the FIREBASEAPI GitHub secret.
+ * For local dev: copy to firebase-config.js and add your apiKey.
  */
 const FIREBASE_CONFIG = {
-  apiKey: "AIzaSyAvIKeuLM7140-y3wiKqiz0oVvADpSWQV8",
+  apiKey: "__FIREBASE_API_KEY__",
   authDomain: "sharedgovernance-52992.firebaseapp.com",
   projectId: "sharedgovernance-52992",
   storageBucket: "sharedgovernance-52992.firebasestorage.app",

@@ -79,9 +79,9 @@ Defines the 17 allowed Shared Governance committees. Used for admin dropdowns an
 
 1. Push this repository to GitHub
 2. Go to **Settings → Pages**
-3. Set **Source** to "Deploy from a branch"
-4. Select your branch and `/ (root)` folder
-5. Save
+3. Set **Source** to **GitHub Actions**
+4. Add the `FIREBASEAPI` secret (Settings → Secrets and variables → Actions) with your Firebase API key
+5. The workflow deploys on every push to `main`
 
 If the repo is named `sharedgovernance`, the app will be at `https://<username>.github.io/sharedgovernance/`
 
