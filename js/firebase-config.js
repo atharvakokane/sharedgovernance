@@ -4,12 +4,12 @@
  * Enable Firestore Database, then paste your config below.
  * Leave as null to use localStorage (submissions stay on each device).
  */
-const FIREBASE_CONFIG = null; // Replace with your config, e.g.:
-// const FIREBASE_CONFIG = {
-//   apiKey: "your-api-key",
-//   authDomain: "your-project.firebaseapp.com",
-//   projectId: "your-project-id",
-//   storageBucket: "your-project.appspot.com",
-//   messagingSenderId: "123456789",
-//   appId: "1:123456789:web:abc123"
-// };
+const firebaseConfig = {
+  apiKey: "AIzaSyAvIKeuLM7140-y3wiKqiz0oVvADpSWQV8",
+  authDomain: "sharedgovernance-52992.firebaseapp.com",
+  projectId: "sharedgovernance-52992",
+  storageBucket: "sharedgovernance-52992.firebasestorage.app",
+  messagingSenderId: "977154498966",
+  appId: "1:977154498966:web:7a8076e46ab19b02447db7",
+  measurementId: "G-34MS20FGJD"
+};
