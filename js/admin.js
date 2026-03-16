@@ -80,22 +80,56 @@ function renderSubmissionsTable(submissions, assignments = [], meetings = []) {
 
   const filterPid = (document.getElementById('filterPid') || {}).value || '';
   const filterCommittee = (document.getElementById('filterCommittee') || {}).value || '';
-
+  const filterAttended = (document.getElementById('filterAttended') || {}).value || '';
   const displaySubmissions = getCombinedSubmissions(submissions, assignments, meetings);
+
+  const committeesFromSubmissions = [...new Set(displaySubmissions.map(s => s.committeeName).filter(Boolean))];
+  const committeesFromMeetings = meetings ? [...new Set(meetings.map(m => m.committee).filter(Boolean))] : [];
+  const committees = [...new Set([...committeesFromSubmissions, ...committeesFromMeetings])].sort();
+  const pidsFromSubmissions = [...new Set(displaySubmissions.map(s => s.pid).filter(Boolean))];
+  const pidsFromAssignments = assignments ? assignments.map(a => a.pid).filter(Boolean) : [];
+  const pids = [...new Set([...pidsFromSubmissions, ...pidsFromAssignments])].sort();
 
   let filtered = displaySubmissions;
   if (filterPid) {
-    filtered = filtered.filter(s => String(s.pid).toLowerCase().includes(filterPid.toLowerCase()));
+    filtered = filtered.filter(s => String(s.pid) === filterPid);
   }
   if (filterCommittee) {
-    filtered = filtered.filter(s => String(s.committeeName || '').toLowerCase().includes(filterCommittee.toLowerCase()));
+    filtered = filtered.filter(s => String(s.committeeName || '') === filterCommittee);
+  }
+  if (filterAttended === 'yes') {
+    filtered = filtered.filter(s => s.attendanceConfirmed === true);
+  } else if (filterAttended === 'no') {
+    filtered = filtered.filter(s => s.attendanceConfirmed !== true);
   }
 
   const tableHtml = `
-    <div class="filter-bar">
-      <input type="text" id="filterPid" placeholder="Filter by PID" value="${escapeHtml(filterPid)}">
-      <input type="text" id="filterCommittee" placeholder="Filter by Committee" value="${escapeHtml(filterCommittee)}">
-      <button type="button" class="btn btn-secondary btn-sm" id="clearFilters">Clear</button>
+    <div class="filter-bar filter-bar-dropdowns">
+      <div class="dropdown-wrap">
+        <label for="filterPid" class="dropdown-label">PID</label>
+        <select id="filterPid" class="dropdown-select" aria-label="Filter by PID">
+          <option value="">All PIDs</option>
+          ${pids.map(pid => `<option value="${escapeHtml(pid)}" ${filterPid === pid ? 'selected' : ''}>${escapeHtml(pid)}</option>`).join('')}
+        </select>
+      </div>
+      <div class="dropdown-wrap">
+        <label for="filterCommittee" class="dropdown-label">Committee</label>
+        <select id="filterCommittee" class="dropdown-select" aria-label="Filter by committee">
+          <option value="">All Committees</option>
+          ${committees.map(c => `<option value="${escapeHtml(c)}" ${filterCommittee === c ? 'selected' : ''}>${escapeHtml(c)}</option>`).join('')}
+        </select>
+      </div>
+      <div class="dropdown-wrap">
+        <label for="filterAttended" class="dropdown-label">Attended</label>
+        <select id="filterAttended" class="dropdown-select" aria-label="Filter by attendance">
+          <option value="" ${filterAttended === '' ? 'selected' : ''}>All</option>
+          <option value="yes" ${filterAttended === 'yes' ? 'selected' : ''}>Yes</option>
+          <option value="no" ${filterAttended === 'no' ? 'selected' : ''}>No</option>
+        </select>
+      </div>
+      <div class="filter-bar-actions">
+        <button type="button" class="btn btn-secondary btn-sm" id="clearFilters">Clear</button>
+      </div>
     </div>
     <div class="table-responsive">
       <table class="data-table">
@@ -135,18 +169,19 @@ function renderSubmissionsTable(submissions, assignments = [], meetings = []) {
 
   container.innerHTML = tableHtml;
 
-  // Debounced filter - 200ms delay prevents blocking on every keystroke
-  const debouncedRender = debounce(() => renderSubmissionsTable(getSubmissions(), assignments, meetings), 200);
-  ['filterPid', 'filterCommittee'].forEach(id => {
+  const doRender = () => renderSubmissionsTable(getSubmissions(), assignments, meetings);
+  ['filterPid', 'filterCommittee', 'filterAttended'].forEach(id => {
     const el = document.getElementById(id);
-    if (el) el.addEventListener('input', debouncedRender);
+    if (el) el.addEventListener('change', doRender);
   });
   const clearBtn = document.getElementById('clearFilters');
   if (clearBtn) {
     clearBtn.addEventListener('click', () => {
       document.getElementById('filterPid').value = '';
       document.getElementById('filterCommittee').value = '';
-      renderSubmissionsTable(getSubmissions(), assignments, meetings);
+      const fa = document.getElementById('filterAttended');
+      if (fa) fa.value = '';
+      doRender();
     });
   }
 
@@ -167,18 +202,28 @@ function renderAssignmentsSection(assignments, meetings, allowedCommittees = [])
     ? allowedCommittees
     : [...new Set([...fromMeetings])].sort();
 
+  const pidOptions = assignments.map(a => a.pid);
+
   const html = `
-    <div class="filter-bar">
-      <input type="text" id="assignPid" placeholder="Senator PID" list="pidList">
-      <datalist id="pidList">
-        ${assignments.map(a => `<option value="${escapeHtml(a.pid)}">`).join('')}
-      </datalist>
-      <input type="text" id="assignCommittee" placeholder="Committee name" list="committeeList">
-      <datalist id="committeeList">
-        ${committees.map(c => `<option value="${escapeHtml(c)}">`).join('')}
-      </datalist>
-      <button type="button" class="btn btn-primary btn-sm" id="addAssignment">Add Assignment</button>
-      <button type="button" class="btn btn-danger btn-sm" id="removeAssignment">Remove Assignment</button>
+    <div class="filter-bar filter-bar-dropdowns">
+      <div class="dropdown-wrap">
+        <label for="assignPid" class="dropdown-label">Senator</label>
+        <select id="assignPid" class="dropdown-select" aria-label="Select senator PID">
+          <option value="">Select senator...</option>
+          ${pidOptions.map(pid => `<option value="${escapeHtml(pid)}">${escapeHtml(pid)}</option>`).join('')}
+        </select>
+      </div>
+      <div class="dropdown-wrap">
+        <label for="assignCommittee" class="dropdown-label">Committee</label>
+        <select id="assignCommittee" class="dropdown-select" aria-label="Select committee">
+          <option value="">Select committee...</option>
+          ${committees.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('')}
+        </select>
+      </div>
+      <div class="filter-bar-actions">
+        <button type="button" class="btn btn-primary btn-sm" id="addAssignment">Add Assignment</button>
+        <button type="button" class="btn btn-danger btn-sm" id="removeAssignment">Remove Assignment</button>
+      </div>
     </div>
     <div class="table-responsive">
       <table class="data-table">
