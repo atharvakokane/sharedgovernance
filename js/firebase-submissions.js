@@ -4,14 +4,19 @@
  * Otherwise falls back to localStorage.
  */
 (function() {
+  const SUBMISSIONS_KEY = 'vt_gov_submissions';
   let db = null;
 
   function initFirebase() {
     if (db) return db;
-    if (typeof firebase === 'undefined' || !FIREBASE_CONFIG) return null;
+    if (typeof firebase === 'undefined' || typeof FIREBASE_CONFIG === 'undefined' || !FIREBASE_CONFIG || !FIREBASE_CONFIG.apiKey) return null;
     try {
-      firebase.initializeApp(FIREBASE_CONFIG);
-      db = firebase.firestore();
+      if (firebase.apps && firebase.apps.length > 0) {
+        db = firebase.firestore();
+      } else {
+        firebase.initializeApp(FIREBASE_CONFIG);
+        db = firebase.firestore();
+      }
       return db;
     } catch (e) {
       console.warn('Firebase init failed:', e);
@@ -23,15 +28,22 @@
     const firestore = initFirebase();
     if (firestore) {
       try {
-        const snap = await firestore.collection('submissions').orderBy('meetingDate', 'desc').orderBy('timestamp', 'desc').get();
-        return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        const snap = await firestore.collection('submissions').get();
+        const docs = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        docs.sort((a, b) => {
+          const dA = a.meetingDate || '';
+          const dB = b.meetingDate || '';
+          if (dA !== dB) return dB.localeCompare(dA);
+          return (b.timestamp || '').localeCompare(a.timestamp || '');
+        });
+        return docs;
       } catch (e) {
         console.error('Firestore getSubmissions failed:', e);
         return [];
       }
     }
     try {
-      const stored = localStorage.getItem(GOV_STORAGE_KEYS.SUBMISSIONS);
+      const stored = localStorage.getItem(SUBMISSIONS_KEY);
       return stored ? JSON.parse(stored) : [];
     } catch {
       return [];
@@ -43,13 +55,13 @@
     if (firestore) {
       try {
         await firestore.collection('submissions').add({
-          pid: submission.pid,
-          committeeName: submission.committeeName,
-          meetingDate: submission.meetingDate,
-          meetingId: submission.meetingId,
-          timestamp: submission.timestamp,
-          attendanceConfirmed: submission.attendanceConfirmed,
-          notes: submission.notes || ''
+          pid: String(submission.pid || ''),
+          committeeName: String(submission.committeeName || ''),
+          meetingDate: String(submission.meetingDate || ''),
+          meetingId: String(submission.meetingId || ''),
+          timestamp: String(submission.timestamp || ''),
+          attendanceConfirmed: !!submission.attendanceConfirmed,
+          notes: String(submission.notes || '')
         });
         return;
       } catch (e) {
@@ -57,9 +69,15 @@
         throw e;
       }
     }
-    const submissions = JSON.parse(localStorage.getItem(GOV_STORAGE_KEYS.SUBMISSIONS) || '[]');
-    submissions.push(submission);
-    localStorage.setItem(GOV_STORAGE_KEYS.SUBMISSIONS, JSON.stringify(submissions));
+    try {
+      const stored = localStorage.getItem(SUBMISSIONS_KEY) || '[]';
+      const submissions = JSON.parse(stored);
+      submissions.push(submission);
+      localStorage.setItem(SUBMISSIONS_KEY, JSON.stringify(submissions));
+    } catch (e) {
+      console.error('localStorage save failed:', e);
+      throw e;
+    }
   };
 
   window.importSubmissionsToFirestore = async function(submissions) {

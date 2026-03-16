@@ -146,10 +146,14 @@ async function handleSubmission(session, meeting, attendance, notes, formEl) {
   try {
     await saveSubmission(submission);
   } catch (err) {
+    console.error('Save failed:', err);
     var card = formEl.closest('.meeting-card');
     var errAlert = card.querySelector('.alert-danger') || document.createElement('div');
     errAlert.className = 'alert alert-danger';
     errAlert.textContent = 'Failed to save. Please try again.';
+    if (typeof isFirebaseEnabled === 'function' && isFirebaseEnabled()) {
+      errAlert.textContent += ' Check Firestore rules in Firebase Console.';
+    }
     errAlert.setAttribute('role', 'alert');
     formEl.insertBefore(errAlert, formEl.firstChild);
     setTimeout(function() { errAlert.remove(); }, 5000);
