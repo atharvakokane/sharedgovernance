@@ -44,11 +44,25 @@ function customDropdownHTML(hiddenId, options, selectedValue, placeholder) {
 }
 
 /**
+ * Closes all custom dropdowns on the page.
+ */
+function closeAllCustomDropdowns() {
+  document.querySelectorAll('.custom-dropdown-trigger.open').forEach(trigger => {
+    trigger.classList.remove('open');
+    trigger.setAttribute('aria-expanded', 'false');
+  });
+  document.querySelectorAll('.custom-dropdown-panel.open').forEach(panel => {
+    panel.classList.remove('open');
+  });
+}
+
+/**
  * Initializes custom dropdown behavior for a container.
  * @param {HTMLElement} container - Container that has .custom-dropdown elements
  */
 function initCustomDropdowns(container) {
   if (!container) return;
+
   container.querySelectorAll('.custom-dropdown').forEach(dropdown => {
     const hiddenId = dropdown.dataset.dropdownFor;
     const trigger = dropdown.querySelector('.custom-dropdown-trigger');
@@ -64,6 +78,12 @@ function initCustomDropdowns(container) {
     };
 
     const open = () => {
+      closeAllCustomDropdowns();
+      const rect = trigger.getBoundingClientRect();
+      panel.style.top = (rect.bottom + 4) + 'px';
+      panel.style.left = rect.left + 'px';
+      panel.style.width = rect.width + 'px';
+      panel.style.minWidth = rect.width + 'px';
       trigger.classList.add('open');
       panel.classList.add('open');
       trigger.setAttribute('aria-expanded', 'true');
@@ -93,6 +113,12 @@ function initCustomDropdowns(container) {
     document.addEventListener('click', (e) => {
       if (!dropdown.contains(e.target)) close();
     });
+
+    window.addEventListener('scroll', (e) => {
+      if (e.target.closest && e.target.closest('.custom-dropdown-panel')) return;
+      close();
+    }, true);
+    window.addEventListener('resize', close);
   });
 }
 
