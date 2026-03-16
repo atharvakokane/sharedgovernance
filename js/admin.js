@@ -280,7 +280,10 @@ function renderSubmissionsTable(submissions, assignments = [], meetings = []) {
   container.innerHTML = tableHtml;
   initCustomDropdowns(container);
 
-  const doRender = () => renderSubmissionsTable(getSubmissions(), assignments, meetings);
+  const doRender = async () => {
+    const subs = await getSubmissions();
+    renderSubmissionsTable(subs, assignments, meetings);
+  };
   ['filterPid', 'filterCommittee', 'filterAttended'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.addEventListener('change', doRender);
@@ -479,8 +482,8 @@ function renderMeetingsSection(meetings, allowedCommittees, onMeetingsChange) {
 /**
  * Exports all submissions as a JSON file download.
  */
-function exportSubmissionsJSON() {
-  const submissions = getSubmissions();
+async function exportSubmissionsJSON() {
+  const submissions = await getSubmissions();
   const blob = new Blob([JSON.stringify(submissions, null, 2)], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
@@ -494,8 +497,8 @@ function exportSubmissionsJSON() {
  * Exports all submissions as a CSV file download.
  * Columns: Senator PID, Committee, Date, Attended, Meeting Notes
  */
-function exportSubmissionsCSV(meetings, assignments) {
-  const submissions = getSubmissions();
+async function exportSubmissionsCSV(meetings, assignments) {
+  const submissions = await getSubmissions();
   const combined = getCombinedSubmissions(submissions, assignments, meetings);
   
   if (!combined || !combined.length) {
@@ -537,23 +540,30 @@ function exportSubmissionsCSV(meetings, assignments) {
  */
 function importSubmissions(file, onRefresh) {
   const reader = new FileReader();
-  reader.onload = function() {
+  reader.onload = async function() {
     try {
       const imported = JSON.parse(reader.result);
       if (!Array.isArray(imported)) throw new Error('Invalid format');
-      const existing = getSubmissions();
-      const merged = [...existing];
-      imported.forEach(s => {
-        if (s.pid && s.committeeName && s.timestamp) {
-          const duplicate = merged.some(m => 
-            m.pid === s.pid && m.meetingId === s.meetingId && m.timestamp === s.timestamp
-          );
-          if (!duplicate) merged.push(s);
-        }
-      });
-      localStorage.setItem(GOV_STORAGE_KEYS.SUBMISSIONS, JSON.stringify(merged));
-      if (onRefresh) onRefresh();
-      alert(`Imported ${imported.length} submissions. Total: ${merged.length}`);
+      if (typeof importSubmissionsToFirestore === 'function' && typeof isFirebaseEnabled === 'function' && isFirebaseEnabled()) {
+        const result = await importSubmissionsToFirestore(imported);
+        const total = await getSubmissions();
+        if (onRefresh) onRefresh();
+        alert(`Imported ${result.added} new submissions. Total: ${total.length}`);
+      } else {
+        const existing = await getSubmissions();
+        const merged = [...existing];
+        imported.forEach(s => {
+          if (s.pid && s.committeeName && s.timestamp) {
+            const duplicate = merged.some(m => 
+              m.pid === s.pid && m.meetingId === s.meetingId && m.timestamp === s.timestamp
+            );
+            if (!duplicate) merged.push(s);
+          }
+        });
+        localStorage.setItem(GOV_STORAGE_KEYS.SUBMISSIONS, JSON.stringify(merged));
+        if (onRefresh) onRefresh();
+        alert(`Imported ${imported.length} submissions. Total: ${merged.length}`);
+      }
     } catch (e) {
       alert('Invalid file. Please select a valid submissions JSON export.');
     }

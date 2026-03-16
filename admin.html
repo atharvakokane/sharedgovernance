@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' https: data:; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; frame-ancestors 'none'; base-uri 'self'">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' https: data:; script-src 'self' 'unsafe-inline' https://www.gstatic.com; connect-src 'self' https://*.firebaseio.com https://*.googleapis.com https://firestore.googleapis.com wss://*.firebaseio.com; style-src 'self' 'unsafe-inline'; frame-ancestors 'none'; base-uri 'self'">
   <meta name="referrer" content="strict-origin-when-cross-origin">
   <title>VT Shared Governance Tracker - Admin</title>
   <link rel="stylesheet" href="css/styles.css?v=20260320">
@@ -84,9 +84,13 @@
     </main>
   </div>
 
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+  <script src="js/firebase-config.js?v=20260321"></script>
+  <script src="js/firebase-submissions.js?v=20260321"></script>
   <script src="js/utils.js?v=20260228"></script>
   <script src="js/auth.js?v=20260228"></script>
-  <script src="js/admin.js?v=20260320"></script>
+  <script src="js/admin.js?v=20260321"></script>
   <script>
     (function() {
       // Always attach UI handlers first so logout always works
@@ -100,16 +104,15 @@
 
       // Export buttons
       document.getElementById('exportCsvBtn').addEventListener('click', function() {
-        // We need the latest meetings and assignments for the CSV export to include missing ones
         Promise.all([
           fetchData('meetings.json'),
           fetchData('assignments.json')
-        ]).then(function(results) {
-          var meetings = getMeetingsWithOverride(results[0]);
-          var assignments = getAssignmentsWithOverride(results[1]);
-          exportSubmissionsCSV(meetings, assignments);
-        }).catch(function() {
-          exportSubmissionsCSV(); // Fallback if fetch fails
+        ]).then(async function(results) {
+          var m = getMeetingsWithOverride(results[0]);
+          var a = getAssignmentsWithOverride(results[1]);
+          await exportSubmissionsCSV(m, a);
+        }).catch(async function() {
+          await exportSubmissionsCSV([], []);
         });
       });
       document.getElementById('exportJsonBtn').addEventListener('click', exportSubmissionsJSON);
@@ -118,7 +121,7 @@
       document.getElementById('importFile').addEventListener('change', function(e) {
         var file = e.target.files && e.target.files[0];
         if (file) {
-          importSubmissions(file, function() { renderSubmissionsTable(getSubmissions()); });
+          importSubmissions(file, function() { refreshSubmissions(meetings, assignments); });
           e.target.value = '';
         }
       });
@@ -127,9 +130,13 @@
       var session = requireAuth('admin');
       if (!session) return;
 
-      // Render submissions table
-      function refreshSubmissions(meetings, assignments) {
-        renderSubmissionsTable(getSubmissions(), assignments || [], meetings || []);
+      // Render submissions table (meetings, assignments from outer scope when loaded)
+      var meetings = [], assignments = [];
+      async function refreshSubmissions(m, a) {
+        if (m !== undefined) meetings = m;
+        if (a !== undefined) assignments = a;
+        var subs = await getSubmissions();
+        renderSubmissionsTable(subs, assignments || [], meetings || []);
       }
 
       // Initial render (empty assignments/meetings until loaded)
@@ -141,8 +148,8 @@
         fetchData('assignments.json'),
         fetchData('committees.json').catch(function() { return []; })
       ]).then(function(results) {
-        var meetings = getMeetingsWithOverride(results[0]);
-        var assignments = getAssignmentsWithOverride(results[1]);
+        meetings = getMeetingsWithOverride(results[0]);
+        assignments = getAssignmentsWithOverride(results[1]);
         var allowedCommittees = Array.isArray(results[2]) ? results[2] : [];
 
         // Update submissions table with loaded assignments and meetings for missing check

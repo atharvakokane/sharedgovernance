@@ -679,6 +679,12 @@ body {
   border: 1px solid #bfdbfe;
 }
 
+.alert-danger {
+  background: #fef2f2;
+  color: #991b1b;
+  border: 1px solid #fecaca;
+}
+
 /* ===== Filter Bar ===== */
 .filter-bar {
   display: flex;

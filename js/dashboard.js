@@ -118,21 +118,21 @@ function renderDashboard(session, meetings) {
       }
     });
 
-    form.addEventListener('submit', function(e) {
+    form.addEventListener('submit', async function(e) {
       e.preventDefault();
       const meetingId = this.dataset.meetingId;
       const meeting = activeMeetings.find(m => m.id === meetingId);
       const attendance = this.querySelector('[name="attendance"]').checked;
       const notes = this.querySelector('[name="notes"]').value.trim();
-      handleSubmission(session, meeting, attendance, notes, this);
+      await handleSubmission(session, meeting, attendance, notes, this);
     });
   });
 }
 
 /**
- * Saves submission to localStorage and shows confirmation.
+ * Saves submission (Firestore or localStorage) and shows confirmation.
  */
-function handleSubmission(session, meeting, attendance, notes, formEl) {
+async function handleSubmission(session, meeting, attendance, notes, formEl) {
   const submission = {
     pid: session.pid,
     committeeName: meeting.committee,
@@ -143,7 +143,18 @@ function handleSubmission(session, meeting, attendance, notes, formEl) {
     notes: notes
   };
 
-  saveSubmission(submission);
+  try {
+    await saveSubmission(submission);
+  } catch (err) {
+    var card = formEl.closest('.meeting-card');
+    var errAlert = card.querySelector('.alert-danger') || document.createElement('div');
+    errAlert.className = 'alert alert-danger';
+    errAlert.textContent = 'Failed to save. Please try again.';
+    errAlert.setAttribute('role', 'alert');
+    formEl.insertBefore(errAlert, formEl.firstChild);
+    setTimeout(function() { errAlert.remove(); }, 5000);
+    return;
+  }
 
   var card = formEl.closest('.meeting-card');
   var existingAlert = card.querySelector('.alert-success');

@@ -32,10 +32,13 @@ async function fetchData(filename) {
 }
 
 /**
- * Gets all submissions from localStorage.
- * @returns {Array} Array of submission objects
+ * Gets all submissions. Uses Firestore when configured, else localStorage.
+ * @returns {Promise<Array>} Array of submission objects
  */
-function getSubmissions() {
+async function getSubmissions() {
+  if (typeof getSubmissionsAsync === 'function') {
+    return getSubmissionsAsync();
+  }
   try {
     const stored = localStorage.getItem(GOV_STORAGE_KEYS.SUBMISSIONS);
     return stored ? JSON.parse(stored) : [];
@@ -45,11 +48,15 @@ function getSubmissions() {
 }
 
 /**
- * Saves a new submission to localStorage.
+ * Saves a new submission. Uses Firestore when configured, else localStorage.
  * @param {Object} submission - Submission object
+ * @returns {Promise<void>}
  */
-function saveSubmission(submission) {
-  const submissions = getSubmissions();
+async function saveSubmission(submission) {
+  if (typeof saveSubmissionAsync === 'function') {
+    return saveSubmissionAsync(submission);
+  }
+  const submissions = JSON.parse(localStorage.getItem(GOV_STORAGE_KEYS.SUBMISSIONS) || '[]');
   submissions.push(submission);
   localStorage.setItem(GOV_STORAGE_KEYS.SUBMISSIONS, JSON.stringify(submissions));
 }

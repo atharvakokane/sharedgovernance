@@ -19,6 +19,8 @@ A static web application for Virginia Tech Shared Governance appointees to log m
 ├── css/
 │   └── styles.css      # Shared styles
 ├── js/
+│   ├── firebase-config.js    # Firebase config (optional, for shared submissions)
+│   ├── firebase-submissions.js # Firestore submissions (when Firebase configured)
 │   ├── utils.js        # Data loading, localStorage helpers
 │   ├── auth.js         # Authentication, session management
 │   ├── dashboard.js    # Senator dashboard logic
@@ -101,6 +103,42 @@ Then open `http://localhost:8000` (or `http://localhost:8000/sharedgovernance` i
 
 **Important**: Change these before production use.
 
-## Data Persistence Note
+## Data Persistence
 
-GitHub Pages serves static files only. Submissions and admin edits (assignments, meetings) are stored in the browser's localStorage. Use the **Export Submissions** button to download a JSON backup. Data is per-browser; for shared persistence across users, a backend would be required.
+- **Submissions**: By default, stored in the browser's localStorage (per-device). To share submissions across all devices so admins can access them from any computer, configure **Firebase Firestore** (see below).
+- **Assignments & meetings**: Admin edits are stored in localStorage. Use **Export** to backup.
+
+## Shared Submissions (Firebase Firestore)
+
+To make submissions accessible from any computer an admin uses:
+
+1. Create a project at [Firebase Console](https://console.firebase.google.com/)
+2. Enable **Firestore Database** (Create database → Start in test mode for development)
+3. In Project Settings, copy your web app config
+4. Edit `js/firebase-config.js` and replace `FIREBASE_CONFIG = null` with your config:
+
+```javascript
+const FIREBASE_CONFIG = {
+  apiKey: "your-api-key",
+  authDomain: "your-project.firebaseapp.com",
+  projectId: "your-project-id",
+  storageBucket: "your-project.appspot.com",
+  messagingSenderId: "123456789",
+  appId: "1:123456789:web:abc123"
+};
+```
+
+5. Set Firestore security rules (Firestore → Rules) to restrict access as needed. For a simple setup with no auth:
+
+```
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /submissions/{document=**} {
+      allow read, write: if true;
+    }
+  }
+}
+```
+
+**Note**: For production, add proper authentication and restrict rules. The free Firestore tier is sufficient for typical usage.
