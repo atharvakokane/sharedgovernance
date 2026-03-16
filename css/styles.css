@@ -709,6 +709,7 @@ body {
 .filter-bar-dropdowns {
   align-items: flex-end;
   gap: 1rem;
+  overflow: visible;
 }
 
 .dropdown-wrap {
@@ -716,6 +717,7 @@ body {
   flex-direction: column;
   gap: 0.35rem;
   position: relative;
+  overflow: visible;
 }
 
 .dropdown-label {
@@ -724,6 +726,12 @@ body {
   color: var(--color-text-muted);
   text-transform: uppercase;
   letter-spacing: 0.04em;
+}
+
+/* Custom dropdown container - overflow visible so panel can extend beyond card */
+.custom-dropdown {
+  position: relative;
+  overflow: visible;
 }
 
 /* Custom dropdown trigger */
@@ -786,7 +794,7 @@ body {
   max-height: 280px;
   overflow-y: auto;
   overflow-x: hidden;
-  z-index: 50;
+  z-index: 1100;
   display: none;
   animation: dropdownSlide 0.2s var(--ease-out-expo);
   scrollbar-width: thin;
