@@ -47,12 +47,8 @@ function customDropdownHTML(hiddenId, options, selectedValue, placeholder) {
  * Closes all custom dropdowns on the page.
  */
 function closeAllCustomDropdowns() {
-  document.querySelectorAll('.custom-dropdown-trigger.open').forEach(trigger => {
-    trigger.classList.remove('open');
-    trigger.setAttribute('aria-expanded', 'false');
-  });
   document.querySelectorAll('.custom-dropdown-panel.open').forEach(panel => {
-    panel.classList.remove('open');
+    if (panel._close) panel._close();
   });
 }
 
@@ -72,14 +68,20 @@ function initCustomDropdowns(container) {
     if (!trigger || !panel || !hiddenInput) return;
 
     const close = () => {
+      if (panel.parentElement !== dropdown) {
+        dropdown.appendChild(panel);
+      }
       trigger.classList.remove('open');
       panel.classList.remove('open');
       trigger.setAttribute('aria-expanded', 'false');
     };
 
+    panel._close = close;
+
     const open = () => {
       closeAllCustomDropdowns();
       const rect = trigger.getBoundingClientRect();
+      document.body.appendChild(panel);
       panel.style.top = (rect.bottom + 4) + 'px';
       panel.style.left = rect.left + 'px';
       panel.style.width = rect.width + 'px';
