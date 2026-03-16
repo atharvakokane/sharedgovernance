@@ -23,12 +23,14 @@ A static web application for Virginia Tech Shared Governance appointees to log m
 │   ├── auth.js         # Authentication, session management
 │   ├── dashboard.js    # Senator dashboard logic
 │   └── admin.js        # Admin dashboard logic
-└── data/
-    ├── users.json      # PID, password, role (senator/admin)
-    ├── assignments.json # Senator-to-committee assignments
-    ├── meetings.json   # Meeting data (mirrors governance.vt.edu/UpcomingEvents)
-    ├── committees.json # Allowed committees list (17 bodies)
-    └── submissions.json # Seed file (submissions stored in localStorage)
+├── data/
+│   ├── users.json      # PID, password, role (senator/admin)
+│   ├── assignments.json # Senator-to-committee assignments
+│   ├── meetings.json   # Meeting data (mirrors governance.vt.edu/UpcomingEvents)
+│   └── committees.json # Allowed committees list (17 bodies)
+├── security.txt        # Security contact (RFC 9116)
+└── .well-known/
+    └── security.txt   # Security contact (canonical)
 ```
 
 ## Data Files

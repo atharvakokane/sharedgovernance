@@ -1,0 +1,11 @@
+# Security policy for VT Shared Governance Tracker
+# https://www.rfc-editor.org/rfc/rfc9116
+
+Contact: mailto:atharvashashankk@vt.edu
+Expires: 2027-12-31T23:59:59.000Z
+Preferred-Languages: en
+Canonical: https://atharvakokane.github.io/sharedgovernance/security.txt
+
+# This is a student project for Virginia Tech shared governance tracking.
+# All data is stored locally in the browser (localStorage). No credentials
+# or sensitive data are transmitted to external servers.

@@ -33,7 +33,6 @@ async function fetchData(filename) {
 
 /**
  * Gets all submissions from localStorage.
- * Merges with initial submissions.json if it has data (for import scenarios).
  * @returns {Array} Array of submission objects
  */
 function getSubmissions() {
