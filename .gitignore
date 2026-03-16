@@ -18,3 +18,7 @@ npm-debug.log*
 .firebase/
 firebase-debug.log
 firestore-debug.log
+
+# Secrets (injected via GitHub Actions)
+js/firebase-config.js
+data/users.json

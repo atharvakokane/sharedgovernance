@@ -79,11 +79,27 @@ Defines the 17 allowed Shared Governance committees. Used for admin dropdowns an
 
 1. Push this repository to GitHub
 2. Go to **Settings → Pages**
-3. Set **Source** to "Deploy from a branch"
-4. Select your branch and `/ (root)` folder
-5. Save
+3. Set **Source** to **GitHub Actions**
+4. Add the required secrets (see below)
+5. The workflow deploys on every push to `main`
 
 If the repo is named `sharedgovernance`, the app will be at `https://<username>.github.io/sharedgovernance/`
+
+### Secrets (required for deployment)
+
+`js/firebase-config.js` and `data/users.json` are not committed. They are created at deploy time from GitHub Secrets.
+
+1. Go to **Settings → Secrets and variables → Actions**
+2. Add these secrets:
+
+| Secret | Description | How to create |
+|--------|-------------|---------------|
+| **USERS_JSON** | Required. Your `data/users.json` with PIDs and passwords. | `base64 -w 0 data/users.json` (Linux) or `base64 -i data/users.json` (Mac) or `[Convert]::ToBase64String([IO.File]::ReadAllBytes("data/users.json"))` (PowerShell) |
+| **FIREBASE_CONFIG** | Optional. Your `js/firebase-config.js` for Firestore sync. | Same base64 command for `js/firebase-config.js`. If omitted, app uses localStorage only. |
+
+**Local setup**: Keep `js/firebase-config.js` and `data/users.json` in your project folder for local development. They are in `.gitignore` and will not be committed.
+
+**Before first push**: Add the `USERS_JSON` secret in repo Settings → Secrets → Actions, or the deploy workflow will fail.
 
 ## Local Development
 

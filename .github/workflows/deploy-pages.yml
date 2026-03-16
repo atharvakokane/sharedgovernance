@@ -1,0 +1,60 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Create firebase-config.js from secret
+        env:
+          FIREBASE_CONFIG_B64: ${{ secrets.FIREBASE_CONFIG }}
+        run: |
+          if [ -z "$FIREBASE_CONFIG_B64" ]; then
+            echo "FIREBASE_CONFIG secret not set. Using localStorage mode (no Firestore sync)."
+            echo '/** Firebase config - use FIREBASE_CONFIG secret for Firestore */' > js/firebase-config.js
+            echo 'const FIREBASE_CONFIG = null;' >> js/firebase-config.js
+          else
+            echo "$FIREBASE_CONFIG_B64" | base64 -d > js/firebase-config.js
+          fi
+
+      - name: Create users.json from secret
+        env:
+          USERS_JSON_B64: ${{ secrets.USERS_JSON }}
+        run: |
+          if [ -z "$USERS_JSON_B64" ]; then
+            echo "::error::USERS_JSON secret is required. Add it in Settings → Secrets and variables → Actions"
+            echo "Encode your data/users.json: base64 -w 0 data/users.json"
+            exit 1
+          fi
+          echo "$USERS_JSON_B64" | base64 -d > data/users.json
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: "."
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

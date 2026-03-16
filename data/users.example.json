@@ -1,0 +1,4 @@
+[
+  { "pid": "admin001", "password": "change-me", "role": "admin" },
+  { "pid": "12345678", "password": "change-me", "role": "senator" }
+]
