@@ -754,18 +754,12 @@ body {
   gap: 0.35rem;
 }
 
-.dropdown-wrap:hover .dropdown-label {
-  color: var(--color-primary);
-  transition: color 0.25s var(--ease-out-expo);
-}
-
 .dropdown-label {
   font-size: 0.75rem;
   font-weight: 600;
   color: var(--color-text-muted);
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  transition: color 0.25s var(--ease-out-expo);
 }
 
 .dropdown-select {
@@ -775,10 +769,7 @@ body {
   font-size: 0.875rem;
   font-family: inherit;
   color: var(--color-text);
-  background-color: #ffffff;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236b7280' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 0.75rem center;
+  background: white url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236b7280' d='M6 8L1 3h10z'/%3E%3C/svg%3E") no-repeat right 0.75rem center;
   background-size: 12px;
   border: 1.5px solid var(--color-border);
   border-radius: var(--radius);
@@ -786,28 +777,17 @@ body {
   appearance: none;
   -webkit-appearance: none;
   -moz-appearance: none;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
-  transition: border-color 0.25s var(--ease-out-expo), box-shadow 0.25s var(--ease-out-expo),
-    background-color 0.25s, transform 0.25s var(--ease-out-expo);
+  transition: border-color 0.25s, box-shadow 0.25s var(--ease-out-expo);
 }
 
 .dropdown-select:hover {
-  border-color: rgba(134, 31, 65, 0.45);
-  background-color: #fefefe;
-  box-shadow: 0 4px 12px rgba(134, 31, 65, 0.08), 0 2px 4px rgba(0, 0, 0, 0.04);
-  transform: translateY(-2px);
+  border-color: #cbd5e1;
 }
 
 .dropdown-select:focus {
   outline: none;
   border-color: var(--color-primary);
-  box-shadow: 0 0 0 4px rgba(134, 31, 65, 0.15), 0 2px 8px rgba(134, 31, 65, 0.1);
-  transform: translateY(-2px);
-}
-
-.dropdown-select:active {
-  transform: translateY(0);
-  transition-duration: 0.1s;
+  box-shadow: 0 0 0 4px rgba(134, 31, 65, 0.1);
 }
 
 .dropdown-select option {
