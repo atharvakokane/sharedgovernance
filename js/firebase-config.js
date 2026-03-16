@@ -4,7 +4,7 @@
  * Enable Firestore Database, then paste your config below.
  * Leave as null to use localStorage (submissions stay on each device).
  */
-const firebaseConfig = {
+const FIREBASE_CONFIG = {
   apiKey: "AIzaSyAvIKeuLM7140-y3wiKqiz0oVvADpSWQV8",
   authDomain: "sharedgovernance-52992.firebaseapp.com",
   projectId: "sharedgovernance-52992",
