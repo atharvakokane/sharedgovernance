@@ -16,6 +16,10 @@ A static web application for Virginia Tech Shared Governance appointees to log m
 ├── index.html          # Login page
 ├── dashboard.html      # Senator dashboard
 ├── admin.html          # Admin (cabinet) dashboard
+├── firebase.json       # Firebase project config (for firestore deploy)
+├── firestore.rules     # Firestore security rules
+├── .firebaserc         # Firebase project ID
+├── .nojekyll           # Disable Jekyll on GitHub Pages
 ├── css/
 │   └── styles.css      # Shared styles
 ├── js/

@@ -13,3 +13,8 @@ desktop.ini
 # Logs
 *.log
 npm-debug.log*
+
+# Firebase
+.firebase/
+firebase-debug.log
+firestore-debug.log
