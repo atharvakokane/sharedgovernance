@@ -1,0 +1,10 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Allow read/write on submissions for cross-device sync.
+    // The app uses custom PID auth, not Firebase Auth.
+    match /submissions/{document=**} {
+      allow read, write: if true;
+    }
+  }
+}

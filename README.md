@@ -128,17 +128,26 @@ const FIREBASE_CONFIG = {
 };
 ```
 
-5. Set Firestore security rules (Firestore → Rules) to restrict access as needed. For a simple setup with no auth:
+5. **Set Firestore security rules** (required for cross-device sync). Firebase defaults to "deny all", so submissions will not sync until you update rules.
 
-```
-rules_version = '2';
-service cloud.firestore {
-  match /databases/{database}/documents {
-    match /submissions/{document=**} {
-      allow read, write: if true;
-    }
-  }
-}
-```
+   - Go to [Firebase Console](https://console.firebase.google.com/) → your project → **Firestore Database** → **Rules**
+   - Replace the rules with:
+
+   ```
+   rules_version = '2';
+   service cloud.firestore {
+     match /databases/{database}/documents {
+       match /submissions/{document=**} {
+         allow read, write: if true;
+       }
+     }
+   }
+   ```
+
+   - Click **Publish**
+
+   Or deploy via CLI: `firebase deploy --only firestore` (using the `firestore.rules` file in this repo).
+
+**Data not syncing across devices?** Check that (1) Firestore rules allow read/write on `submissions`, and (2) the Admin page shows "(Firestore – syncs across devices)" under Submissions. If it shows "(localStorage – this device only)", the config or rules may be wrong.
 
 **Note**: For production, add proper authentication and restrict rules. The free Firestore tier is sufficient for typical usage.

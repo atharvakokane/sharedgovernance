@@ -46,6 +46,7 @@
         <h2 class="card-title">Submissions</h2>
         <p style="margin: 0 0 1rem 0; color: var(--color-text-muted); font-size: 0.9rem;">
           All meeting notes and attendance confirmations from senators.
+          <span id="storageStatus" style="font-size: 0.85rem; margin-left: 0.5rem;"></span>
         </p>
         <div id="submissionsSection">
           <p class="empty-state">Loading...</p>
@@ -86,11 +87,11 @@
 
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
-  <script src="js/firebase-config.js?v=20260321"></script>
-  <script src="js/firebase-submissions.js?v=20260321"></script>
+  <script src="js/firebase-config.js?v=20260322"></script>
+  <script src="js/firebase-submissions.js?v=20260322"></script>
   <script src="js/utils.js?v=20260228"></script>
   <script src="js/auth.js?v=20260228"></script>
-  <script src="js/admin.js?v=20260321"></script>
+  <script src="js/admin.js?v=20260322"></script>
   <script>
     (function() {
       // Always attach UI handlers first so logout always works
@@ -137,6 +138,15 @@
         if (a !== undefined) assignments = a;
         var subs = await getSubmissions();
         renderSubmissionsTable(subs, assignments || [], meetings || []);
+      }
+
+      // Show storage mode (Firestore vs localStorage)
+      var statusEl = document.getElementById('storageStatus');
+      if (statusEl && typeof isFirebaseEnabled === 'function') {
+        statusEl.textContent = isFirebaseEnabled()
+          ? '(Firestore – syncs across devices)'
+          : '(localStorage – this device only)';
+        statusEl.style.color = isFirebaseEnabled() ? 'var(--color-success, #28a745)' : 'var(--color-text-muted)';
       }
 
       // Initial render (empty assignments/meetings until loaded)
