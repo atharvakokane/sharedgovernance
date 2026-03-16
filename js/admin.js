@@ -13,6 +13,90 @@ function debounce(fn, ms) {
 }
 
 /**
+ * Creates a custom dropdown HTML string.
+ * @param {string} hiddenId - ID for the hidden input that stores the value
+ * @param {Array} options - [{value, label}]
+ * @param {string} selectedValue - Currently selected value
+ * @param {string} placeholder - Placeholder when nothing selected
+ * @returns {string} HTML string
+ */
+function customDropdownHTML(hiddenId, options, selectedValue, placeholder) {
+  const selected = options.find(o => o.value === selectedValue);
+  const displayText = selected ? selected.label : placeholder;
+  const chevronSvg = '<svg class="chevron" width="12" height="12" viewBox="0 0 12 12" fill="currentColor"><path d="M6 8L1 3h10z"/></svg>';
+  const optionsHtml = options.map(o => `
+    <button type="button" class="custom-dropdown-option ${o.value === selectedValue ? 'selected' : ''}" data-value="${escapeHtml(o.value)}">
+      ${escapeHtml(o.label)}
+    </button>
+  `).join('');
+  return `
+    <div class="custom-dropdown" data-dropdown-for="${escapeHtml(hiddenId)}">
+      <button type="button" class="custom-dropdown-trigger" aria-haspopup="listbox" aria-expanded="false">
+        <span class="trigger-text">${escapeHtml(displayText)}</span>
+        ${chevronSvg}
+      </button>
+      <div class="custom-dropdown-panel" role="listbox">
+        ${optionsHtml}
+      </div>
+    </div>
+    <input type="hidden" id="${escapeHtml(hiddenId)}" value="${escapeHtml(selectedValue)}">
+  `;
+}
+
+/**
+ * Initializes custom dropdown behavior for a container.
+ * @param {HTMLElement} container - Container that has .custom-dropdown elements
+ */
+function initCustomDropdowns(container) {
+  if (!container) return;
+  container.querySelectorAll('.custom-dropdown').forEach(dropdown => {
+    const hiddenId = dropdown.dataset.dropdownFor;
+    const trigger = dropdown.querySelector('.custom-dropdown-trigger');
+    const panel = dropdown.querySelector('.custom-dropdown-panel');
+    const textEl = dropdown.querySelector('.trigger-text');
+    const hiddenInput = document.getElementById(hiddenId);
+    if (!trigger || !panel || !hiddenInput) return;
+
+    const close = () => {
+      trigger.classList.remove('open');
+      panel.classList.remove('open');
+      trigger.setAttribute('aria-expanded', 'false');
+    };
+
+    const open = () => {
+      trigger.classList.add('open');
+      panel.classList.add('open');
+      trigger.setAttribute('aria-expanded', 'true');
+    };
+
+    trigger.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const isOpen = panel.classList.contains('open');
+      if (isOpen) close();
+      else open();
+    });
+
+    panel.querySelectorAll('.custom-dropdown-option').forEach(opt => {
+      opt.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const value = opt.dataset.value;
+        const label = opt.textContent.trim();
+        hiddenInput.value = value;
+        textEl.textContent = label;
+        panel.querySelectorAll('.custom-dropdown-option').forEach(o => o.classList.remove('selected'));
+        opt.classList.add('selected');
+        close();
+        hiddenInput.dispatchEvent(new Event('change', { bubbles: true }));
+      });
+    });
+
+    document.addEventListener('click', (e) => {
+      if (!dropdown.contains(e.target)) close();
+    });
+  });
+}
+
+/**
  * Combines actual submissions with missing ones (senators assigned to meetings that passed without submission).
  * @param {Array} submissions - Actual submissions from localStorage
  * @param {Array} assignments - Senator assignments
@@ -103,29 +187,27 @@ function renderSubmissionsTable(submissions, assignments = [], meetings = []) {
     filtered = filtered.filter(s => s.attendanceConfirmed !== true);
   }
 
+  const pidOptions = [{ value: '', label: 'All PIDs' }, ...pids.map(pid => ({ value: pid, label: pid }))];
+  const committeeOptions = [{ value: '', label: 'All Committees' }, ...committees.map(c => ({ value: c, label: c }))];
+  const attendedOptions = [
+    { value: '', label: 'All' },
+    { value: 'yes', label: 'Yes' },
+    { value: 'no', label: 'No' }
+  ];
+
   const tableHtml = `
     <div class="filter-bar filter-bar-dropdowns">
       <div class="dropdown-wrap">
         <label for="filterPid" class="dropdown-label">PID</label>
-        <select id="filterPid" class="dropdown-select" aria-label="Filter by PID">
-          <option value="">All PIDs</option>
-          ${pids.map(pid => `<option value="${escapeHtml(pid)}" ${filterPid === pid ? 'selected' : ''}>${escapeHtml(pid)}</option>`).join('')}
-        </select>
+        ${customDropdownHTML('filterPid', pidOptions, filterPid, 'All PIDs')}
       </div>
       <div class="dropdown-wrap">
         <label for="filterCommittee" class="dropdown-label">Committee</label>
-        <select id="filterCommittee" class="dropdown-select" aria-label="Filter by committee">
-          <option value="">All Committees</option>
-          ${committees.map(c => `<option value="${escapeHtml(c)}" ${filterCommittee === c ? 'selected' : ''}>${escapeHtml(c)}</option>`).join('')}
-        </select>
+        ${customDropdownHTML('filterCommittee', committeeOptions, filterCommittee, 'All Committees')}
       </div>
       <div class="dropdown-wrap">
         <label for="filterAttended" class="dropdown-label">Attended</label>
-        <select id="filterAttended" class="dropdown-select" aria-label="Filter by attendance">
-          <option value="" ${filterAttended === '' ? 'selected' : ''}>All</option>
-          <option value="yes" ${filterAttended === 'yes' ? 'selected' : ''}>Yes</option>
-          <option value="no" ${filterAttended === 'no' ? 'selected' : ''}>No</option>
-        </select>
+        ${customDropdownHTML('filterAttended', attendedOptions, filterAttended, 'All')}
       </div>
       <div class="filter-bar-actions">
         <button type="button" class="btn btn-secondary btn-sm" id="clearFilters">Clear</button>
@@ -168,6 +250,7 @@ function renderSubmissionsTable(submissions, assignments = [], meetings = []) {
   `;
 
   container.innerHTML = tableHtml;
+  initCustomDropdowns(container);
 
   const doRender = () => renderSubmissionsTable(getSubmissions(), assignments, meetings);
   ['filterPid', 'filterCommittee', 'filterAttended'].forEach(id => {
@@ -202,23 +285,18 @@ function renderAssignmentsSection(assignments, meetings, allowedCommittees = [])
     ? allowedCommittees
     : [...new Set([...fromMeetings])].sort();
 
-  const pidOptions = assignments.map(a => a.pid);
+  const pidOpts = [{ value: '', label: 'Select senator...' }, ...assignments.map(a => ({ value: a.pid, label: a.pid }))];
+  const committeeOpts = [{ value: '', label: 'Select committee...' }, ...committees.map(c => ({ value: c, label: c }))];
 
   const html = `
     <div class="filter-bar filter-bar-dropdowns">
       <div class="dropdown-wrap">
         <label for="assignPid" class="dropdown-label">Senator</label>
-        <select id="assignPid" class="dropdown-select" aria-label="Select senator PID">
-          <option value="">Select senator...</option>
-          ${pidOptions.map(pid => `<option value="${escapeHtml(pid)}">${escapeHtml(pid)}</option>`).join('')}
-        </select>
+        ${customDropdownHTML('assignPid', pidOpts, '', 'Select senator...')}
       </div>
       <div class="dropdown-wrap">
         <label for="assignCommittee" class="dropdown-label">Committee</label>
-        <select id="assignCommittee" class="dropdown-select" aria-label="Select committee">
-          <option value="">Select committee...</option>
-          ${committees.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('')}
-        </select>
+        ${customDropdownHTML('assignCommittee', committeeOpts, '', 'Select committee...')}
       </div>
       <div class="filter-bar-actions">
         <button type="button" class="btn btn-primary btn-sm" id="addAssignment">Add Assignment</button>
@@ -243,6 +321,7 @@ function renderAssignmentsSection(assignments, meetings, allowedCommittees = [])
   `;
 
   container.innerHTML = html;
+  initCustomDropdowns(container);
 
   document.getElementById('addAssignment').addEventListener('click', () => {
     const pid = document.getElementById('assignPid').value.trim();
