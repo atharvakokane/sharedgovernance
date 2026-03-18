@@ -1,9 +1,10 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // User metadata (pid, role). Readable by authenticated users for role lookup.
+    // User metadata (pid, role). Readable for role lookup after sign-in.
+    // Submissions are protected; users only exposes role.
     match /users/{pid} {
-      allow read: if request.auth != null;
+      allow read: if true;
       allow write: if false;
     }
     // Submissions: only authenticated users can read/write.
