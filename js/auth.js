@@ -1,21 +1,14 @@
 /**
  * VT Shared Governance Tracker - Authentication Module
- * Handles login validation, session management, and role-based redirects.
+ * Uses Firebase Auth for secure password verification. User metadata (pid, role)
+ * is stored in Firestore. No plaintext passwords are stored or transmitted.
  */
 
 /**
- * Validates user credentials against users.json data.
- * @param {string} pid - User's PID
- * @param {string} password - User's password
- * @param {Array} users - Array of user objects from users.json
- * @returns {Object|null} User object if valid, null otherwise
+ * @deprecated Use firebaseAuthSignIn instead. Kept for reference only.
  */
 function validateUser(pid, password, users) {
-  const user = users.find(u => 
-    String(u.pid).trim() === String(pid).trim() && 
-    u.password === password
-  );
-  return user || null;
+  return null;
 }
 
 /**
@@ -47,17 +40,46 @@ function getSession() {
 }
 
 /**
- * Clears the session (logout).
+ * Clears the session (logout). Also signs out from Firebase Auth when enabled.
  */
 function clearSession() {
   localStorage.removeItem(GOV_STORAGE_KEYS.SESSION);
+  if (typeof firebaseAuthSignOut === 'function') {
+    firebaseAuthSignOut();
+  }
 }
 
 /**
- * Checks if user has a valid session and redirects to login if not.
- * Call this on protected pages (dashboard, admin).
+ * Async auth check using Firebase Auth. Call on protected pages (dashboard, admin).
  * @param {string} requiredRole - 'senator' or 'admin'. If null, any role is OK.
- * @returns {Object|null} Session if valid, null if redirected
+ * @returns {Promise<Object|null>} Session if valid, null if redirected
+ */
+async function requireAuthAsync(requiredRole = null) {
+  if (typeof firebaseAuthGetSession === 'function' && typeof isFirebaseAuthEnabled === 'function' && isFirebaseAuthEnabled()) {
+    const session = await firebaseAuthGetSession();
+    if (!session) {
+      redirectToLogin();
+      return null;
+    }
+    if (requiredRole && session.role !== requiredRole) {
+      if (session.role === 'admin') {
+        window.location.href = getBasePath() + '/admin.html';
+      } else {
+        window.location.href = getBasePath() + '/dashboard.html';
+      }
+      return null;
+    }
+    createSession(session);
+    return session;
+  }
+  redirectToLogin();
+  return null;
+}
+
+/**
+ * @deprecated Use requireAuthAsync. Sync version for backward compatibility - redirects if no session.
+ * @param {string} requiredRole - 'senator' or 'admin'
+ * @returns {Object|null}
  */
 function requireAuth(requiredRole = null) {
   const session = getSession();

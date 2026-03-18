@@ -1,0 +1,12 @@
+[
+  {
+    "pid": "yourpid@vt.edu",
+    "password": "your-secure-password",
+    "role": "admin"
+  },
+  {
+    "pid": "senatorpid@vt.edu",
+    "password": "senator-password",
+    "role": "senator"
+  }
+]

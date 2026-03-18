@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' https: data:; script-src 'self' 'unsafe-inline' https://www.gstatic.com; connect-src 'self' https://*.firebaseio.com https://*.googleapis.com https://firestore.googleapis.com https://securetoken.googleapis.com https://firebaseinstallations.googleapis.com wss://*.firebaseio.com; style-src 'self' 'unsafe-inline'; frame-ancestors 'none'; base-uri 'self'">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' https: data:; script-src 'self' 'unsafe-inline' https://www.gstatic.com; connect-src 'self' https://*.firebaseio.com https://*.googleapis.com https://firestore.googleapis.com https://securetoken.googleapis.com https://identitytoolkit.googleapis.com https://firebaseinstallations.googleapis.com wss://*.firebaseio.com; style-src 'self' 'unsafe-inline'; frame-ancestors 'none'; base-uri 'self'">
   <meta name="referrer" content="strict-origin-when-cross-origin">
   <title>VT Shared Governance Tracker - Login</title>
   <link rel="stylesheet" href="css/styles.css?v=20260315">
@@ -23,7 +23,7 @@
       <div class="card login-card reveal">
         <h2 class="card-title">Sign In</h2>
         <p class="empty-state" style="padding: 0 0 1rem 0; margin: 0;">
-          Enter your PID and password to access your committees and meetings.
+          Enter your PID (or PID@vt.edu) and password to access your committees and meetings.
         </p>
         <div id="loginError" class="login-error" role="alert"></div>
         <form id="loginForm">
@@ -42,52 +42,64 @@
   </div>
 
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
   <script src="js/firebase-config.js?v=20260322"></script>
+  <script src="js/firebase-auth.js?v=20260322"></script>
   <script src="js/firebase-submissions.js?v=20260322"></script>
   <script src="js/utils.js?v=20260228"></script>
   <script src="js/auth.js?v=20260228"></script>
   <script>
-    // Redirect if already logged in
-    (function() {
-      const session = getSession();
-      if (session) {
-        if (session.role === 'admin') {
-          window.location.href = getBasePath() + '/admin.html';
-        } else {
-          window.location.href = getBasePath() + '/dashboard.html';
+    (async function() {
+      if (typeof firebaseAuthGetSession === 'function' && typeof isFirebaseAuthEnabled === 'function' && isFirebaseAuthEnabled()) {
+        const session = await firebaseAuthGetSession();
+        if (session) {
+          if (session.role === 'admin') {
+            window.location.href = getBasePath() + '/admin.html';
+          } else {
+            window.location.href = getBasePath() + '/dashboard.html';
+          }
+          return;
         }
       }
-    })();
 
-    document.getElementById('loginForm').addEventListener('submit', async function(e) {
-      e.preventDefault();
-      const pid = document.getElementById('pid').value.trim();
-      const password = document.getElementById('password').value;
-      const errorEl = document.getElementById('loginError');
+      document.getElementById('loginForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const pid = document.getElementById('pid').value.trim();
+        const password = document.getElementById('password').value;
+        const errorEl = document.getElementById('loginError');
 
-      errorEl.classList.remove('visible');
-      errorEl.textContent = '';
+        errorEl.classList.remove('visible');
+        errorEl.textContent = '';
 
-      try {
-        const users = await fetchData('users.json');
-        const user = validateUser(pid, password, users);
-        if (user) {
+        if (!pid || !password) {
+          errorEl.textContent = 'Please enter your PID and password.';
+          errorEl.classList.add('visible');
+          return;
+        }
+
+        try {
+          if (typeof firebaseAuthSignIn !== 'function' || !isFirebaseAuthEnabled()) {
+            errorEl.textContent = 'Authentication is not configured. Please contact the administrator.';
+            errorEl.classList.add('visible');
+            return;
+          }
+          const user = await firebaseAuthSignIn(pid, password);
           createSession(user);
           if (user.role === 'admin') {
             window.location.href = getBasePath() + '/admin.html';
           } else {
             window.location.href = getBasePath() + '/dashboard.html';
           }
-        } else {
-          errorEl.textContent = 'Invalid PID or password. Please try again.';
+        } catch (err) {
+          const msg = (err && (err.code === 'auth/invalid-credential' || err.code === 'auth/wrong-password' || err.code === 'auth/user-not-found'))
+            ? 'Invalid PID or password. Please try again.'
+            : (err && err.message) || 'Unable to sign in. Please try again later.';
+          errorEl.textContent = msg;
           errorEl.classList.add('visible');
         }
-      } catch (err) {
-        errorEl.textContent = 'Unable to load user data. Please try again later.';
-        errorEl.classList.add('visible');
-      }
-    });
+      });
+    })();
   </script>
 </body>
 </html>

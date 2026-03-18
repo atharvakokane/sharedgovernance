@@ -19,3 +19,10 @@ npm-debug.log*
 firebase-debug.log
 firestore-debug.log
 js/firebase-config.js
+service-account*.json
+
+# Node
+node_modules/
+
+# Sensitive - never commit real credentials
+data/users.json

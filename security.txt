@@ -7,5 +7,5 @@ Preferred-Languages: en
 Canonical: https://atharvakokane.github.io/sharedgovernance/security.txt
 
 # This is a student project for Virginia Tech shared governance tracking.
-# All data is stored locally in the browser (localStorage). No credentials
-# or sensitive data are transmitted to external servers.
+# Authentication uses Firebase Auth (passwords hashed, never stored in plaintext).
+# User metadata and submissions are stored in Firestore with authenticated access only.

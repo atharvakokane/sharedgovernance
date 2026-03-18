@@ -4,7 +4,7 @@ A static web application for Virginia Tech Shared Governance appointees to log m
 
 ## Features
 
-- **Authentication**: PID and password validation against `users.json`
+- **Authentication**: Secure login via Firebase Auth (passwords hashed, never stored in plaintext). User roles stored in Firestore.
 - **Senator Dashboard**: View assigned committees and meetings; confirm attendance and submit notes
 - **Admin Dashboard**: View all submissions, manage committee assignments, edit meetings, export data
 - **Mobile-First**: Responsive design with hamburger menu on small screens
@@ -23,14 +23,15 @@ A static web application for Virginia Tech Shared Governance appointees to log m
 ├── css/
 │   └── styles.css      # Shared styles
 ├── js/
-│   ├── firebase-config.js    # Firebase config (optional, for shared submissions)
-│   ├── firebase-submissions.js # Firestore submissions (when Firebase configured)
+│   ├── firebase-config.js    # Firebase config (required for auth & submissions)
+│   ├── firebase-auth.js      # Firebase Auth (secure password verification)
+│   ├── firebase-submissions.js # Firestore submissions
 │   ├── utils.js        # Data loading, localStorage helpers
 │   ├── auth.js         # Authentication, session management
 │   ├── dashboard.js    # Senator dashboard logic
 │   └── admin.js        # Admin dashboard logic
 ├── data/
-│   ├── users.json      # PID, password, role (senator/admin)
+│   ├── users.json.example   # Template for migration (copy to users.json for migration only)
 │   ├── assignments.json # Senator-to-committee assignments
 │   ├── meetings.json   # Meeting data (mirrors governance.vt.edu/UpcomingEvents)
 │   └── committees.json # Allowed committees list (17 bodies)
@@ -41,13 +42,22 @@ A static web application for Virginia Tech Shared Governance appointees to log m
 
 ## Data Files
 
-### users.json
-```json
-[
-  { "pid": "admin001", "password": "admin123", "role": "admin" },
-  { "pid": "12345678", "password": "senator1", "role": "senator" }
-]
-```
+### Authentication (Firebase Auth + Firestore)
+
+User accounts are stored securely in Firebase Auth (passwords hashed) and Firestore (roles). To set up users:
+
+1. **Enable Email/Password sign-in** in [Firebase Console](https://console.firebase.google.com/) → Authentication → Sign-in method
+2. **Create a service account key**: Project Settings → Service accounts → Generate new private key. Save as `service-account.json` in the project root (do not commit).
+3. **Create `data/users.json`** from `data/users.json.example` with your users (for migration only)
+4. **Run the migration**:
+   ```bash
+   npm install
+   set GOOGLE_APPLICATION_CREDENTIALS=./service-account.json   # Windows
+   # or: export GOOGLE_APPLICATION_CREDENTIALS=./service-account.json   # Mac/Linux
+   npm run migrate-users
+   ```
+5. **Delete `data/users.json`** after migration (it contains plaintext passwords)
+6. **Deploy Firestore rules**: `firebase deploy --only firestore`
 
 ### assignments.json
 ```json
@@ -101,58 +111,21 @@ Then open `http://localhost:8000` (or `http://localhost:8000/sharedgovernance` i
 
 ## Default Credentials
 
-- **Admin**: PID `admin001`, password `admin123`
-- **Senator**: PID `12345678`, password `senator1`
-- **Senator**: PID `87654321`, password `senator2`
-
-**Important**: Change these before production use.
+After running the migration script with your `data/users.json`, users can sign in with their PID and password. There are no default credentials—create your own in `users.json` before migrating.
 
 ## Data Persistence
 
 - **Submissions**: By default, stored in the browser's localStorage (per-device). To share submissions across all devices so admins can access them from any computer, configure **Firebase Firestore** (see below).
 - **Assignments & meetings**: Admin edits are stored in localStorage. Use **Export** to backup.
 
-## Shared Submissions (Firebase Firestore)
+## Firebase Setup (Required)
 
-To make submissions accessible from any computer an admin uses:
+Firebase is required for authentication and optional shared submissions:
 
 1. Create a project at [Firebase Console](https://console.firebase.google.com/)
-2. Enable **Firestore Database** (Create database → Start in test mode for development)
-3. In Project Settings, copy your web app config
-4. Edit `js/firebase-config.js` and replace `FIREBASE_CONFIG = null` with your config:
+2. Enable **Firestore Database** and **Authentication** (Email/Password sign-in)
+3. Add your web app and copy the config to `js/firebase-config.template.js` (or use the deploy workflow with `FIREBASEAPI` secret)
+4. **Deploy Firestore rules**: `firebase deploy --only firestore` (uses `firestore.rules` in this repo)
 
-```javascript
-const FIREBASE_CONFIG = {
-  apiKey: "your-api-key",
-  authDomain: "your-project.firebaseapp.com",
-  projectId: "your-project-id",
-  storageBucket: "your-project.appspot.com",
-  messagingSenderId: "123456789",
-  appId: "1:123456789:web:abc123"
-};
-```
-
-5. **Set Firestore security rules** (required for cross-device sync). Firebase defaults to "deny all", so submissions will not sync until you update rules.
-
-   - Go to [Firebase Console](https://console.firebase.google.com/) → your project → **Firestore Database** → **Rules**
-   - Replace the rules with:
-
-   ```
-   rules_version = '2';
-   service cloud.firestore {
-     match /databases/{database}/documents {
-       match /submissions/{document=**} {
-         allow read, write: if true;
-       }
-     }
-   }
-   ```
-
-   - Click **Publish**
-
-   Or deploy via CLI: `firebase deploy --only firestore` (using the `firestore.rules` file in this repo).
-
-**Data not syncing across devices?** Check that (1) Firestore rules allow read/write on `submissions`, and (2) the Admin page shows "(Firestore – syncs across devices)" under Submissions. If it shows "(localStorage – this device only)", the config or rules may be wrong.
-
-**Note**: For production, add proper authentication and restrict rules. The free Firestore tier is sufficient for typical usage. 
+The Firestore rules require authentication: only signed-in users can read/write submissions and user metadata. This keeps the site secure and helps avoid being flagged by browsers. 
 
