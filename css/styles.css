@@ -191,6 +191,16 @@ body {
   animation: slideInRight var(--transition-slow);
 }
 
+.disclaimer-banner {
+  margin: 0;
+  padding: 0.5rem 1rem;
+  background: #fef3c7;
+  color: #92400e;
+  font-size: 0.8rem;
+  text-align: center;
+  border-bottom: 1px solid #fcd34d;
+}
+
 @keyframes slideInRight {
   from { 
     opacity: 0;
