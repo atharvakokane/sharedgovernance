@@ -48,7 +48,7 @@ User accounts are stored securely in Firebase Auth (passwords hashed) and Firest
 
 1. **Enable Email/Password sign-in** in [Firebase Console](https://console.firebase.google.com/) → Authentication → Sign-in method
 2. **Create a service account key**: Project Settings → Service accounts → Generate new private key. Save as `service-account.json` in the project root (do not commit).
-3. **Create `data/users.json`** from `data/users.json.example` with your users (for migration only)
+3. **Create `data/users.json`** from `data/users.json.example` with your users (for migration only). Replace `***` with actual passwords. **Never commit this file**—it is in `.gitignore`.
 4. **Run the migration**:
    ```bash
    npm install
@@ -56,8 +56,11 @@ User accounts are stored securely in Firebase Auth (passwords hashed) and Firest
    # or: export GOOGLE_APPLICATION_CREDENTIALS=./service-account.json   # Mac/Linux
    npm run migrate-users
    ```
-5. **Delete `data/users.json`** after migration (it contains plaintext passwords)
-6. **Deploy Firestore rules**: `firebase deploy --only firestore`
+5. **Delete `data/users.json`** after migration (it contains plaintext passwords).
+6. **Delete legacy @sharedgovernance.local accounts** (if you migrated before switching to @vt.edu): `npm run delete-legacy-users`
+7. **Deploy Firestore rules**: `firebase deploy --only firestore`
+
+**Note:** Passwords exist only in Firebase Authentication. The repo contains no passwords.
 
 ### assignments.json
 ```json
