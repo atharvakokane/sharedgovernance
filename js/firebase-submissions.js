@@ -28,6 +28,7 @@
     const firestore = initFirebase();
     if (firestore) {
       try {
+        if (typeof firebaseAuthReady === 'function') await firebaseAuthReady();
         const snap = await firestore.collection('submissions').get();
         const docs = snap.docs.map(d => ({ id: d.id, ...d.data() }));
         docs.sort((a, b) => {
@@ -54,6 +55,7 @@
     const firestore = initFirebase();
     if (firestore) {
       try {
+        if (typeof firebaseAuthReady === 'function') await firebaseAuthReady();
         await firestore.collection('submissions').add({
           pid: String(submission.pid || ''),
           committeeName: String(submission.committeeName || ''),
@@ -83,6 +85,11 @@
   window.importSubmissionsToFirestore = async function(submissions) {
     const firestore = initFirebase();
     if (!firestore) return { ok: false, added: 0 };
+    try {
+      if (typeof firebaseAuthReady === 'function') await firebaseAuthReady();
+    } catch (e) {
+      return { ok: false, added: 0 };
+    }
     const batch = firestore.batch();
     const existing = await window.getSubmissionsAsync();
     const existingKeys = new Set(existing.map(s => `${s.pid}|${s.meetingId}|${s.timestamp}`));

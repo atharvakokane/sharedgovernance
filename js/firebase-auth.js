@@ -145,4 +145,20 @@
   window.isFirebaseAuthEnabled = function() {
     return !!(typeof FIREBASE_CONFIG === 'object' && FIREBASE_CONFIG && FIREBASE_CONFIG.apiKey);
   };
+
+  /**
+   * Waits for Firebase Auth to be ready (persistence restored). Call before Firestore ops
+   * so requests include the auth token and sync works for all accounts.
+   * @returns {Promise<void>}
+   */
+  window.firebaseAuthReady = function() {
+    const auth = getAuth();
+    if (!auth) return Promise.resolve();
+    return new Promise(function(resolve) {
+      const unsub = auth.onAuthStateChanged(function() {
+        unsub();
+        resolve();
+      });
+    });
+  };
 })();
