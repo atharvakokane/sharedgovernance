@@ -85,6 +85,7 @@
 
   /**
    * Waits for auth state and returns current user session if signed in.
+   * Delays resolving null to avoid redirect loop (Firebase may fire null before persistence restores).
    * @returns {Promise<{pid: string, role: string}|null>}
    */
   window.firebaseAuthGetSession = async function() {
@@ -92,29 +93,44 @@
     if (!auth) return null;
 
     return new Promise(function(resolve) {
-      const unsub = auth.onAuthStateChanged(async function(user) {
+      var resolved = false;
+      var nullTimeout = null;
+
+      function finish(result) {
+        if (resolved) return;
+        resolved = true;
+        if (nullTimeout) clearTimeout(nullTimeout);
         unsub();
-        if (!user || !user.email) {
-          resolve(null);
+        resolve(result);
+      }
+
+      const unsub = auth.onAuthStateChanged(async function(user) {
+        if (user && user.email) {
+          nullTimeout && clearTimeout(nullTimeout);
+          const pid = emailToPid(user.email);
+          if (!pid) {
+            finish(null);
+            return;
+          }
+          const db = getFirestore();
+          if (!db) {
+            finish({ pid, role: 'senator' });
+            return;
+          }
+          try {
+            const userDoc = await db.collection('users').doc(pid).get();
+            const role = userDoc.exists && userDoc.data()?.role ? userDoc.data().role : 'senator';
+            finish({ pid, role });
+          } catch (e) {
+            console.warn('Firestore user fetch:', e);
+            finish({ pid, role: 'senator' });
+          }
           return;
         }
-        const pid = emailToPid(user.email);
-        if (!pid) {
-          resolve(null);
-          return;
-        }
-        const db = getFirestore();
-        if (!db) {
-          resolve({ pid, role: 'senator' });
-          return;
-        }
-        try {
-          const userDoc = await db.collection('users').doc(pid).get();
-          const role = userDoc.exists && userDoc.data()?.role ? userDoc.data().role : 'senator';
-          resolve({ pid, role });
-        } catch (e) {
-          console.warn('Firestore user fetch:', e);
-          resolve({ pid, role: 'senator' });
+        if (!nullTimeout) {
+          nullTimeout = setTimeout(function() {
+            finish(null);
+          }, 1500);
         }
       });
     });
