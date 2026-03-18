@@ -31,11 +31,14 @@
   /**
    * Converts PID to the internal auth email format.
    * Accepts "atharvashashankk" or "atharvashashankk@vt.edu".
-   * Always returns lowercase pid@vt.edu for consistency with Firebase Auth.
+   * Rejects @sharedgovernance.local (legacy, removed).
    */
   function pidToEmail(pid) {
     var p = String(pid || '').trim().toLowerCase();
     if (!p) return '';
+    if (p.endsWith('@sharedgovernance.local')) {
+      throw new Error('Please use your PID or PID@vt.edu. The @sharedgovernance.local format is no longer supported.');
+    }
     var localPart = p.includes('@') ? p.split('@')[0] : p;
     return localPart + AUTH_EMAIL_SUFFIX;
   }
@@ -109,6 +112,11 @@
 
       const unsub = auth.onAuthStateChanged(async function(user) {
         if (user && user.email) {
+          if (user.email.toLowerCase().endsWith('@sharedgovernance.local')) {
+            try { await auth.signOut(); } catch (e) {}
+            finish(null);
+            return;
+          }
           nullTimeout && clearTimeout(nullTimeout);
           const pid = emailToPid(user.email);
           if (!pid) {
