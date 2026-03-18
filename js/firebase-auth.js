@@ -31,10 +31,13 @@
   /**
    * Converts PID to the internal auth email format.
    * Accepts "atharvashashankk" or "atharvashashankk@vt.edu".
+   * Always returns lowercase pid@vt.edu for consistency with Firebase Auth.
    */
   function pidToEmail(pid) {
-    const p = String(pid).trim().toLowerCase();
-    return p.includes('@') ? p : p + AUTH_EMAIL_SUFFIX;
+    var p = String(pid || '').trim().toLowerCase();
+    if (!p) return '';
+    var localPart = p.includes('@') ? p.split('@')[0] : p;
+    return localPart + AUTH_EMAIL_SUFFIX;
   }
 
   /**
