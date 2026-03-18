@@ -51,12 +51,25 @@ function clearSession() {
 
 /**
  * Async auth check using Firebase Auth. Call on protected pages (dashboard, admin).
+ * Uses localStorage session first to avoid redirect loop (Firebase persistence can lag).
  * @param {string} requiredRole - 'senator' or 'admin'. If null, any role is OK.
  * @returns {Promise<Object|null>} Session if valid, null if redirected
  */
 async function requireAuthAsync(requiredRole = null) {
+  var session = getSession();
+  if (session && session.pid && session.role) {
+    if (requiredRole && session.role !== requiredRole) {
+      if (session.role === 'admin') {
+        window.location.href = getBasePath() + '/admin.html';
+      } else {
+        window.location.href = getBasePath() + '/dashboard.html';
+      }
+      return null;
+    }
+    return session;
+  }
   if (typeof firebaseAuthGetSession === 'function' && typeof isFirebaseAuthEnabled === 'function' && isFirebaseAuthEnabled()) {
-    const session = await firebaseAuthGetSession();
+    session = await firebaseAuthGetSession();
     if (!session) {
       redirectToLogin();
       return null;

@@ -51,9 +51,19 @@
   <script src="js/auth.js?v=20260228"></script>
   <script>
     (async function() {
+      var session = getSession();
+      if (session && session.pid && session.role) {
+        if (session.role === 'admin') {
+          window.location.href = getBasePath() + '/admin.html';
+        } else {
+          window.location.href = getBasePath() + '/dashboard.html';
+        }
+        return;
+      }
       if (typeof firebaseAuthGetSession === 'function' && typeof isFirebaseAuthEnabled === 'function' && isFirebaseAuthEnabled()) {
-        const session = await firebaseAuthGetSession();
+        session = await firebaseAuthGetSession();
         if (session) {
+          createSession(session);
           if (session.role === 'admin') {
             window.location.href = getBasePath() + '/admin.html';
           } else {
